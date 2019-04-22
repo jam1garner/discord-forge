@@ -42,6 +42,14 @@ impl EventHandler for Handler {
                     *channel_id = Some(message.channel_id);
                     message.channel_id.say("Channel set").unwrap();
                 }
+                "help" => {
+                    message.channel_id.say(
+                        MessageBuilder::new()
+                            .push("Commands:")
+                            .push_codeblock_safe("%help - display this message\n%set_channel - set the channel to watch\n%update - update param labels and install paramxml if not installed", None)
+                            .build()
+                    );
+                }
                 _ => {}
             }
         }
