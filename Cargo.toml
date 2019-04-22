@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["jam1garner <jam1.mcleod@hotmail.com>"]
 edition = "2018"
 
+[dependencies]
+nus3audio = "^1.0.3"
+
 [dependencies.serenity]
 default-features = false
 version = "0.5"

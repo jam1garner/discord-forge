@@ -1,4 +1,5 @@
-#[macro_use] extern crate serenity;
+#![feature(try_trait)]
+extern crate serenity;
 
 mod converter;
 
@@ -11,7 +12,6 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::{PathBuf};
-use serenity::framework::standard::StandardFramework;
 
 struct Handler {
     channel_id: Arc<Mutex<Option<ChannelId>>>
@@ -26,7 +26,7 @@ impl Handler {
 }
 
 impl EventHandler for Handler {
-    fn message(&self, context: Context, message: Message) {
+    fn message(&self, _context: Context, message: Message) {
         if message.author.bot {
             return;
         }
@@ -37,10 +37,17 @@ impl EventHandler for Handler {
                     return;
                 }
                 "set_channel" => {
-                    let arc = Arc::clone(&self.channel_id);
-                    let mut channel_id = arc.lock().unwrap();
-                    *channel_id = Some(message.channel_id);
-                    message.channel_id.say("Channel set").unwrap();
+                    let owner = serenity::http::raw::get_current_application_info()
+                                .unwrap()
+                                .owner;
+                    if message.author == owner {
+                        let arc = Arc::clone(&self.channel_id);
+                        let mut channel_id = arc.lock().unwrap();
+                        *channel_id = Some(message.channel_id);
+                        message.channel_id.say("Channel set").unwrap();
+                    } else {
+                        message.reply("You do not have the proper permissions to set the channel.");
+                    }
                 }
                 "help" => {
                     message.channel_id.say(

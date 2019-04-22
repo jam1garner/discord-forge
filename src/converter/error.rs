@@ -25,10 +25,45 @@ impl ConvertError {
             kind: ConvertErrorKind::Param
         }
     }
+
+    pub fn nus3audio(message: &str) -> ConvertError {
+        ConvertError {
+            message: message.to_string(),
+            kind: ConvertErrorKind::Nus3audio
+        }
+    }
+
+    pub fn file(message: &str) -> ConvertError {
+        ConvertError {
+            message: message.to_string(),
+            kind: ConvertErrorKind::File
+        }
+    }
+}
+
+impl std::convert::From<std::io::Error> for ConvertError {
+    fn from(err: std::io::Error) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::File,
+        }
+    }
+}
+
+impl std::convert::From<std::option::NoneError> for ConvertError {
+    fn from(err: std::option::NoneError) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::HandleNone,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
     Param,
+    Nus3audio,
+    File,
+    HandleNone,
 }
