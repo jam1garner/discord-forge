@@ -2,6 +2,7 @@
 
 mod converter;
 
+use std::sync::{Arc, Mutex};
 use std::process::Command;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
@@ -12,12 +13,43 @@ use std::io::Write;
 use std::path::{PathBuf};
 use serenity::framework::standard::StandardFramework;
 
-struct Handler;
+struct Handler {
+    channel_id: Arc<Mutex<Option<ChannelId>>>
+}
+
+impl Handler {
+    pub fn new() -> Handler {
+        Handler {
+            channel_id: Arc::new(Mutex::new(None))
+        }
+    }
+}
 
 impl EventHandler for Handler {
-    fn message(&self, _: Context, message: Message) {
+    fn message(&self, context: Context, message: Message) {
         if message.author.bot {
             return;
+        }
+        if !message.content.is_empty() && &message.content[0..1] == "%" {
+            match &message.content[1..] {
+                "update" => {
+                    update(message);
+                    return;
+                }
+                "set_channel" => {
+                    let arc = Arc::clone(&self.channel_id);
+                    let mut channel_id = arc.lock().unwrap();
+                    *channel_id = Some(message.channel_id);
+                    message.channel_id.say("Channel set").unwrap();
+                }
+                _ => {}
+            }
+        }
+        {
+            let arc = Arc::clone(&self.channel_id);
+            if Some(message.channel_id) != *arc.lock().unwrap() {
+                return;
+            }
         }
         for attachment in message.attachments {
             let content = match attachment.download() {
@@ -77,12 +109,12 @@ impl EventHandler for Handler {
 
 fn main() {
     // Login with a bot token from the environment
-    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler)
+    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new())
         .expect("Error creating client");
 
-    client.with_framework(StandardFramework::new()
-        .configure(|c| c.prefix("%"))
-        .cmd("update", update));
+    //client.with_framework(StandardFramework::new()
+    //    .configure(|c| c.prefix("%"))
+    //    .cmd("update", update));
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
@@ -90,7 +122,7 @@ fn main() {
     }
 }
 
-command!(update(_context, message) {
+fn update(message: Message) {
     let update_output = Command::new("sh")
         .arg("update.sh")
         .output()
@@ -107,4 +139,4 @@ command!(update(_context, message) {
                 .build()
         ).unwrap();
     }
-});
+}
