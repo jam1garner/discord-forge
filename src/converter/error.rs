@@ -39,6 +39,13 @@ impl ConvertError {
             kind: ConvertErrorKind::File
         }
     }
+
+    pub fn msc(message: &str) -> ConvertError {
+        ConvertError {
+            message: message.to_string(),
+            kind: ConvertErrorKind::Msc
+        }
+    }
 }
 
 impl std::convert::From<std::io::Error> for ConvertError {
@@ -64,6 +71,7 @@ pub enum ConvertErrorKind {
     BadExtension,
     Param,
     Nus3audio,
+    Msc,
     File,
     HandleNone,
 }

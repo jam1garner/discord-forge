@@ -11,7 +11,7 @@ use serenity::utils::MessageBuilder;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 struct Handler {
     channel_id: Arc<Mutex<Option<ChannelId>>>
@@ -57,6 +57,13 @@ impl EventHandler for Handler {
                             .build()
                     );
                 }
+                "donate" => {
+                    message.channel_id.say(
+                        MessageBuilder::new()
+                            .push("Donation Options:\nhttps://ko-fi.com/jam1garner\nhttps://paypal.me/jam1garner\nAny donations to help cover server costs are much appreciated.")
+                            .build()
+                    );
+                } 
                 _ => {}
             }
         }
