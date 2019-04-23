@@ -11,7 +11,7 @@ use serenity::utils::MessageBuilder;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 
 struct Handler {
     channel_id: Arc<Mutex<Option<ChannelId>>>
@@ -101,6 +101,12 @@ impl EventHandler for Handler {
                 return;
             }
             
+            match converter::extension(path.as_path()) {
+                "mscsb" | "c" => {
+                    message.channel_id.broadcast_typing();
+                }
+                _ => {}
+            }
             match converter::convert(path) {
                 Ok(path) => {
                     let _ = message.channel_id.send_files(vec![path.to_str().unwrap()], |m| m

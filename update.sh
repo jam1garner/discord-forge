@@ -13,3 +13,8 @@ wget https://ci.appveyor.com/api/buildjobs/wa2ie68wd0eq51sw/artifacts/VGAudioCli
 unzip VGAudioCli.zip -d vgaudio > /dev/null
 rm VGAudioCli.zip
 echo "Installed VGAudio"
+
+wget https://raw.githubusercontent.com/BenHall-7/msc_labels/master/mscinfo.xml
+cp mscinfo.xml mscdec/
+mv mscinfo.xml msclang/
+echo "Installed latest mscinfo.xml"

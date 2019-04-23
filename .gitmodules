@@ -1,0 +1,6 @@
+[submodule "msclang"]
+	path = msclang
+	url = https://github.com/jam1garner/msclang.git
+[submodule "mscdec"]
+	path = mscdec
+	url = https://github.com/jam1garner/mscdec.git

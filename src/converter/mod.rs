@@ -1,3 +1,4 @@
+mod msc;
 mod error;
 mod param;
 mod nus3audio_convert;
@@ -5,7 +6,7 @@ use error::ConvertError;
 use std::path::{Path, PathBuf};
 use std::ffi::OsStr;
 
-fn extension<'a>(path: &'a Path) -> &'a str {
+pub fn extension<'a>(path: &'a Path) -> &'a str {
     path.extension()
         .unwrap_or(OsStr::new(""))
         .to_str()
@@ -27,12 +28,18 @@ pub fn convert<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
         "nus3audio" => {
             nus3audio_convert::convert_back(path)
         }
+        "mscsb" => {
+            msc::convert(path)
+        }
+        "c" => {
+            msc::convert_back(path)
+        }
         _ => {
             Err(ConvertError::bad_extension())
         }
     };
 
-    std::fs::remove_file(path);
+    std::fs::remove_file(path)?;
     
     return_path
 }
