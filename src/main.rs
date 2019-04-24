@@ -25,6 +25,12 @@ impl Handler {
     }
 }
 
+static help_text: &str = 
+"%help - display this message\n\
+%set_channel - set the channel to watch\n\
+%update - update param labels and install paramxml if not installed\
+%donate - information on donations";
+
 impl EventHandler for Handler {
     fn message(&self, _context: Context, message: Message) {
         if message.author.bot {
@@ -53,7 +59,8 @@ impl EventHandler for Handler {
                     message.channel_id.say(
                         MessageBuilder::new()
                             .push("Commands:")
-                            .push_codeblock_safe("%help - display this message\n%set_channel - set the channel to watch\n%update - update param labels and install paramxml if not installed", None)
+                            .push_codeblock_safe(help_text, None)
+                            .push("Supported types: prc, xml, wav, nus3audio, mscsb, c")
                             .build()
                     );
                 }

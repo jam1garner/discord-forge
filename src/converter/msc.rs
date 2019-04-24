@@ -17,13 +17,16 @@ pub fn convert<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
         .output()
         .unwrap();
     if !out.status.success() {
-        println!("{}", std::str::from_utf8(&out.stdout[..]).unwrap());
-        println!("{}", std::str::from_utf8(&out.stderr[..]).unwrap());
-        Err(ConvertError::msc(std::str::from_utf8(&out.stdout[..]).unwrap()))
+        Err(ConvertError::msc(
+            &(String::from(
+                std::str::from_utf8(&out.stdout[..]).unwrap()
+            ) + "\n" +
+            std::str::from_utf8(&out.stderr[..]).unwrap())[..]
+        ))
     }
     else {
         Ok(PathBuf::from(outpath))
-    } 
+    }
 }
 
 pub fn convert_back<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
@@ -40,11 +43,14 @@ pub fn convert_back<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
         .output()
         .unwrap();
     if !out.status.success() {
-        println!("{}", std::str::from_utf8(&out.stdout[..]).unwrap());
-        println!("{}", std::str::from_utf8(&out.stderr[..]).unwrap());
-        Err(ConvertError::msc(std::str::from_utf8(&out.stdout[..]).unwrap()))
+        Err(ConvertError::msc(
+            &(String::from(
+                std::str::from_utf8(&out.stdout[..]).unwrap()
+            ) + "\n" +
+            std::str::from_utf8(&out.stderr[..]).unwrap())[..]
+        ))
     }
     else {
         Ok(PathBuf::from(outpath))
-    } 
+    }
 }
