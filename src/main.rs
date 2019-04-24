@@ -52,10 +52,11 @@ impl EventHandler for Handler {
                         *channel_id = Some(message.channel_id);
                         message.channel_id.say("Channel set").unwrap();
                     } else {
-                        message.reply("You do not have the proper permissions to set the channel.");
+                        let _ = message.reply("You do not have the proper permissions to set the channel.");
                     }
                 }
                 "help" => {
+                    let _ =
                     message.channel_id.say(
                         MessageBuilder::new()
                             .push("Commands:")
@@ -65,6 +66,7 @@ impl EventHandler for Handler {
                     );
                 }
                 "donate" => {
+                    let _ =
                     message.channel_id.say(
                         MessageBuilder::new()
                             .push("Donation Options:\nhttps://ko-fi.com/jam1garner\nhttps://paypal.me/jam1garner\nAny donations to help cover server costs are much appreciated.")
@@ -117,7 +119,7 @@ impl EventHandler for Handler {
             
             match converter::extension(path.as_path()) {
                 "mscsb" | "c" => {
-                    message.channel_id.broadcast_typing();
+                    let _ = message.channel_id.broadcast_typing();
                 }
                 _ => {}
             }
