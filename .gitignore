@@ -1,4 +1,5 @@
 /vgaudio
 /paramxml
 /target
+/matlab
 **/*.rs.bk

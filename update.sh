@@ -18,3 +18,9 @@ wget https://raw.githubusercontent.com/BenHall-7/msc_labels/master/mscinfo.xml &
 	cp mscinfo.xml mscdec/ &&\
 	mv mscinfo.xml msclang/ &&\
 	echo "Installed latest mscinfo.xml"
+
+rm -rf matlab/ &&\
+    wget https://github.com/BenHall-7/SSBHLib/releases/download/v1.0/MATLab.zip > /dev/null &&\
+    unzip MATLab.zip -d matlab > /dev/null &&\
+    rm MATLab.zip &&\
+    echo "Installed latest MATLab for .NET Core"
