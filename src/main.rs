@@ -12,16 +12,16 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::{PathBuf};
+use std::collections::BTreeSet;
 
+#[derive(Default)]
 struct Handler {
-    channel_id: Arc<Mutex<Option<ChannelId>>>
+    channel_id: Arc<Mutex<BTreeSet<ChannelId>>>
 }
 
 impl Handler {
     pub fn new() -> Handler {
-        Handler {
-            channel_id: Arc::new(Mutex::new(None))
-        }
+        Default::default()
     }
 }
 
@@ -48,8 +48,8 @@ impl EventHandler for Handler {
                                 .owner;
                     if message.author == owner {
                         let arc = Arc::clone(&self.channel_id);
-                        let mut channel_id = arc.lock().unwrap();
-                        *channel_id = Some(message.channel_id);
+                        let mut channel_ids = arc.lock().unwrap();
+                        channel_ids.insert(message.channel_id);
                         message.channel_id.say("Channel set").unwrap();
                     } else {
                         let _ = message.reply("You do not have the proper permissions to set the channel.");
@@ -77,8 +77,8 @@ impl EventHandler for Handler {
             }
         }
         {
-            let arc = Arc::clone(&self.channel_id);
-            if Some(message.channel_id) != *arc.lock().unwrap() {
+            let enabled_channels = Arc::clone(&self.channel_id);
+            if !enabled_channels.lock().unwrap().contains(&message.channel_id) {
                 return;
             }
         }
