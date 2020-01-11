@@ -1,4 +1,5 @@
 #![feature(try_trait)]
+#![feature(label_break_value)]
 extern crate serenity;
 
 mod converter;
@@ -59,7 +60,7 @@ impl EventHandler for Handler {
                     let _ =
                     message.channel_id.say(
                         MessageBuilder::new()
-                            .push("Commands:")
+                            .push("Version 1.3\nCommands:")
                             .push_codeblock_safe(HELP_TEXT, None)
                             .push("Supported types: prc, xml, wav, nus3audio, mscsb, c")
                             .build()
