@@ -9,7 +9,7 @@ wget https://raw.githubusercontent.com/ultimate-research/param-labels/master/Par
 	echo "Installed latest ParamLabels.csv"
 
 rm -rf vgaudio/ &&\
-	wget https://ci.appveyor.com/api/buildjobs/wa2ie68wd0eq51sw/artifacts/VGAudioCli.zip > /dev/null &&\
+	wget https://ci.appveyor.com/api/buildjobs/6v3widme4hdqqwc7/artifacts/VGAudioCli.zip > /dev/null &&\
 	unzip VGAudioCli.zip -d vgaudio > /dev/null &&\
 	rm VGAudioCli.zip &&\
 	echo "Installed VGAudio"
