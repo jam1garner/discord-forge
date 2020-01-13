@@ -5,7 +5,11 @@ authors = ["jam1garner <jam1.mcleod@hotmail.com>"]
 edition = "2018"
 
 [dependencies]
-nus3audio = "^1.0.3"
+nus3audio = ">=1.0.5"
+motion_list_rs = { git = "https://github.com/ultimate-research/motion_lib" }
+hash40 = "^0.2"
+byteorder = "^1.3"
+serde_yaml = "^0.8"
 
 [dependencies.serenity]
 default-features = false

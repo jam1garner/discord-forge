@@ -26,6 +26,8 @@ impl Handler {
     }
 }
 
+use converter::SUPPORTED_TYPES;
+
 static HELP_TEXT: &str = 
 "%help - display this message\n\
 %set_channel - set the channel to watch\n\
@@ -62,7 +64,7 @@ impl EventHandler for Handler {
                         MessageBuilder::new()
                             .push("Version 1.3\nCommands:")
                             .push_codeblock_safe(HELP_TEXT, None)
-                            .push("Supported types: prc, xml, wav, nus3audio, mscsb, c")
+                            .push(format!("Supported types: {}", SUPPORTED_TYPES))
                             .build()
                     );
                 }

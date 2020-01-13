@@ -1,6 +1,7 @@
 mod msc;
 mod error;
 mod param;
+mod motion_list;
 mod nus3audio_convert;
 use error::ConvertError;
 use std::path::{Path, PathBuf};
@@ -9,8 +10,11 @@ use std::ffi::OsStr;
 static CONVERTERS: &[&dyn Converter] = &[
     &msc::MscsbConverter,
     &nus3audio_convert::Nus3audioConverter,
-    &param::ParamConverter
+    &param::ParamConverter,
+    &motion_list::MotionListConverter,
 ];
+
+pub use error::SUPPORTED_TYPES;
 
 pub fn extension<'a>(path: &'a Path) -> &'a str {
     path.extension()

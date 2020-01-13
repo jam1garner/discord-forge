@@ -12,10 +12,12 @@ impl fmt::Debug for ConvertError {
     }
 }
 
+pub static SUPPORTED_TYPES: &str = "prc, xml, wav, nus3audio, mscsb, c, yaml, motion_list.bin";
+
 impl ConvertError {
     pub fn bad_extension() -> ConvertError {
         ConvertError {
-            message: String::from("Bad extension, cannot convert"),
+            message: format!("Unsupported Filetype. Supported types: {}", SUPPORTED_TYPES),
             kind: ConvertErrorKind::BadExtension,
         }
     }
@@ -67,6 +69,15 @@ impl std::convert::From<std::option::NoneError> for ConvertError {
     }
 }
 
+impl std::convert::From<serde_yaml::Error> for ConvertError {
+    fn from(err: serde_yaml::Error) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::YamlError,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -75,4 +86,5 @@ pub enum ConvertErrorKind {
     Msc,
     File,
     HandleNone,
+    YamlError,
 }
