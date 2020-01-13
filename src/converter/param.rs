@@ -15,7 +15,8 @@ impl Converter for ParamConverter {
     }
 
     fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError> {
-        let outpath = String::from(path.to_str().unwrap()) + ".xml";
+        let mut outpath = PathBuf::from(path);
+        outpath.set_extension("xml");
         let out = Command::new("dotnet")
             .arg("paramxml/netcoreapp2.1/ParamXML.dll")
             .arg("-l")
@@ -35,7 +36,8 @@ impl Converter for ParamConverter {
     }
 
     fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError> {
-        let outpath = String::from(path.to_str().unwrap()) + ".prc";
+        let mut outpath = PathBuf::from(path);
+        outpath.set_extension("prc");
         let out = Command::new("dotnet")
             .arg("paramxml/netcoreapp2.1/ParamXML.dll")
             .arg("-l")
