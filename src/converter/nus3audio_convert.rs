@@ -8,6 +8,21 @@ use super::{Converter, Convert};
 
 pub struct Nus3audioConverter;
 
+const FORMAT_ERROR: &str = "Bad message format. Use either start-end or start,end";
+
+pub fn message_to_range(message: &str) -> Result<String, ConvertError> {
+    let bounds = message
+        .split(|c| c == ',' || c == '-')
+        .map(|s| Ok(usize::from_str_radix(s.trim(), 10)?))
+        .collect::<Result<Vec<usize>, ConvertError>>()
+        .map_err(|_| ConvertError::message_format(FORMAT_ERROR))?;
+    if let &[start, end] = &bounds[..] {
+        Ok(format!("{}-{}", start, end))
+    } else {
+        Err(ConvertError::message_format(FORMAT_ERROR))
+    }
+}
+
 impl Converter for Nus3audioConverter {
     fn get_conversion(&self, file_extension: &str, _: &Path) -> Convert {
         match file_extension {
@@ -17,23 +32,42 @@ impl Converter for Nus3audioConverter {
         }
     }
 
-    fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_to(&self, path: &Path, message: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut lopuspath = PathBuf::from(path);
         lopuspath.set_extension("lopus");
         if lopuspath != path {
-            let out = Command::new("dotnet")
-                .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
-                .arg("-c")
-                .arg(path)
-                .arg(&lopuspath)
-                .arg("--bitrate")
-                .arg("64000")
-                .arg("--CBR")
-                .arg("--opusheader")
-                .arg("namco")
-                .output()?;
+            let out = if let Some(message) = message {
+                Command::new("dotnet")
+                    .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
+                    .arg("-c")
+                    .arg(path)
+                    .arg(&lopuspath)
+                    .arg("--bitrate")
+                    .arg("64000")
+                    .arg("--CBR")
+                    .arg("--opusheader")
+                    .arg("namco")
+                    .arg("-l")
+                    .arg(message_to_range(message)?)
+                    .output()?
+            } else {
+                Command::new("dotnet")
+                    .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
+                    .arg("-c")
+                    .arg(path)
+                    .arg(&lopuspath)
+                    .arg("--bitrate")
+                    .arg("64000")
+                    .arg("--CBR")
+                    .arg("--opusheader")
+                    .arg("namco")
+                    .output()?
+            };
             if !out.status.success() {
-                return Err(ConvertError::nus3audio(std::str::from_utf8(&out.stdout[..])?))
+                return Err(ConvertError::nus3audio(
+                    &(String::from(std::str::from_utf8(&out.stderr[..])?)
+                     + std::str::from_utf8(&out.stdout[..])?)
+                ))
             }
         }
 
@@ -56,7 +90,7 @@ impl Converter for Nus3audioConverter {
         Ok(PathBuf::from(outpath))
     }
 
-    fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_from(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let nus3_file = Nus3audioFile::open(path)?;
         let mut audiofile_path = PathBuf::from("/tmp/converter/");
         audiofile_path.push(nus3_file.files[0].filename());

@@ -19,14 +19,14 @@ impl Converter for MotionListConverter {
         }
     }
 
-    fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_from(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("yaml");
         std::fs::write(&outpath, serde_yaml::to_string(&motion_lib::open(path)?)?)?;
         Ok(outpath)
     }
 
-    fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("bin");
         motion_lib::save(&outpath, &serde_yaml::from_str(&std::fs::read_to_string(path)?)?)?;

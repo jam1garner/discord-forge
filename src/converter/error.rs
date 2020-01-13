@@ -49,6 +49,13 @@ impl ConvertError {
             kind: ConvertErrorKind::Msc
         }
     }
+
+    pub fn message_format(message: &str) -> ConvertError {
+        ConvertError {
+            message: message.to_string(),
+            kind: ConvertErrorKind::MessageFormat
+        }
+    }
 }
 
 impl std::convert::From<std::io::Error> for ConvertError {
@@ -87,6 +94,15 @@ impl std::convert::From<std::str::Utf8Error> for ConvertError {
     }
 }
 
+impl std::convert::From<std::num::ParseIntError> for ConvertError {
+    fn from(err: std::num::ParseIntError) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::ParseIntError,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -96,5 +112,7 @@ pub enum ConvertErrorKind {
     File,
     HandleNone,
     YamlError,
-    Utf8Error
+    Utf8Error,
+    ParseIntError,
+    MessageFormat
 }

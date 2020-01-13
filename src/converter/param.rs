@@ -14,7 +14,7 @@ impl Converter for ParamConverter {
         }
     }
 
-    fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_from(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("xml");
         let out = Command::new("dotnet")
@@ -35,7 +35,7 @@ impl Converter for ParamConverter {
         } 
     }
 
-    fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("prc");
         let out = Command::new("dotnet")

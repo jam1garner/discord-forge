@@ -126,7 +126,7 @@ impl EventHandler for Handler {
                 }
                 _ => {}
             }
-            match converter::convert(path) {
+            match converter::convert(path, &message.content) {
                 Ok(path) => {
                     let _ = message.channel_id.send_files(vec![path.to_str().unwrap()], |m| m
                         .content("Converted file")

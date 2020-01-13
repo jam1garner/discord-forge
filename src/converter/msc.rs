@@ -14,7 +14,7 @@ impl super::Converter for MscsbConverter {
         }
     }
 
-    fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_from(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path.clone());
         outpath.set_extension("c");
         let out = Command::new("python3")
@@ -38,7 +38,7 @@ impl super::Converter for MscsbConverter {
         }
     }
 
-    fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError> {
+    fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path.clone());
         outpath.set_extension("mscsb");
         let out = Command::new("python3")

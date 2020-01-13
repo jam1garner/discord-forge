@@ -23,15 +23,23 @@ pub fn extension<'a>(path: &'a Path) -> &'a str {
         .unwrap()
 }
 
-pub fn convert<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
+fn as_non_empty_string(string: &str) -> Option<&str> {
+    match string {
+        "" => None,
+        a => Some(a)
+    }
+}
+
+pub fn convert<P: AsRef<Path>>(path: P, message: &str) -> Result<PathBuf, ConvertError> {
     let path = path.as_ref();
     let ext = extension(path);
+    let message = as_non_empty_string(message);
     let return_path = 'ret_path: {
         let mut last_err = None;
         for converter in CONVERTERS {
             match match converter.get_conversion(ext, path) {
-                Convert::To => converter.convert_to(path),
-                Convert::From => converter.convert_from(path),
+                Convert::To => converter.convert_to(path, message),
+                Convert::From => converter.convert_from(path, message),
                 Convert::None => continue
             } {
                 return_path @ Ok(_) => break 'ret_path return_path,
@@ -59,6 +67,6 @@ enum Convert {
 
 trait Converter: Sync {
     fn get_conversion(&self, file_extension: &str, path: &Path) -> Convert;
-    fn convert_to(&self, path: &Path) -> Result<PathBuf, ConvertError>;
-    fn convert_from(&self, path: &Path) -> Result<PathBuf, ConvertError>;
+    fn convert_to(&self, path: &Path, message: Option<&str>) -> Result<PathBuf, ConvertError>;
+    fn convert_from(&self, path: &Path, message: Option<&str>) -> Result<PathBuf, ConvertError>;
 }
