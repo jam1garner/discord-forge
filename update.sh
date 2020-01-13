@@ -24,3 +24,7 @@ rm -rf matlab/ &&\
     unzip MATLab.zip -d matlab > /dev/null &&\
     rm MATLab.zip &&\
     echo "Installed latest MATLab for .NET Core"
+
+wget https://raw.githubusercontent.com/ultimate-research/param-labels/master/motion_list/Labels.txt &&\
+    mv Labels.txt motion_list_labels.txt &&\
+    echo "Installed motion_list.bin labels"

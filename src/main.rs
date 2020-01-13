@@ -147,7 +147,11 @@ impl EventHandler for Handler {
     }
 }
 
+const LABEL_PATH: &str = "motion_list_labels.txt";
+
 fn main() {
+    update_labels(LABEL_PATH);
+
     // Login with a bot token from the environment
     let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new())
         .expect("Error creating client");
@@ -159,6 +163,13 @@ fn main() {
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
         println!("An error occurred while running the client: {:?}", why);
+    }
+}
+
+fn update_labels(label_path: &str) {
+    match hash40::read_labels(label_path) {
+        Ok(labels) => hash40::set_labels(labels),
+        Err(e) => println!("Error loading labels: {}", e),
     }
 }
 
@@ -179,4 +190,5 @@ fn update(message: Message) {
                 .build()
         ).unwrap();
     }
+    update_labels(LABEL_PATH);
 }
