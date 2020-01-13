@@ -12,7 +12,7 @@ impl fmt::Debug for ConvertError {
     }
 }
 
-pub static SUPPORTED_TYPES: &str = "prc, xml, wav, nus3audio, mscsb, c, yaml, motion_list.bin";
+pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, mscsb, c, yaml, motion_list.bin";
 
 impl ConvertError {
     pub fn bad_extension() -> ConvertError {
@@ -78,6 +78,15 @@ impl std::convert::From<serde_yaml::Error> for ConvertError {
     }
 }
 
+impl std::convert::From<std::str::Utf8Error> for ConvertError {
+    fn from(err: std::str::Utf8Error) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::Utf8Error,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -87,4 +96,5 @@ pub enum ConvertErrorKind {
     File,
     HandleNone,
     YamlError,
+    Utf8Error
 }

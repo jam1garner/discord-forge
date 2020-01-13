@@ -25,15 +25,13 @@ impl super::Converter for MscsbConverter {
             .arg(path)
             .arg("-o")
             .arg(&outpath)
-            .output()
-            .unwrap();
+            .output()?;
         if !out.status.success() {
             Err(ConvertError::msc(
                 &(String::from(
-                    std::str::from_utf8(&out.stdout[..]).unwrap()
-                ) + "\n" +
-                std::str::from_utf8(&out.stderr[..]).unwrap())[..]
-            ))
+                    std::str::from_utf8(&out.stdout[..])?) + "\n" +
+                    std::str::from_utf8(&out.stderr[..])?
+            )))
         }
         else {
             Ok(PathBuf::from(outpath))
@@ -50,15 +48,13 @@ impl super::Converter for MscsbConverter {
             .arg(path)
             .arg("-o")
             .arg(&outpath)
-            .output()
-            .unwrap();
+            .output()?;
         if !out.status.success() {
             Err(ConvertError::msc(
                 &(String::from(
-                    std::str::from_utf8(&out.stdout[..]).unwrap()
-                ) + "\n" +
-                std::str::from_utf8(&out.stderr[..]).unwrap())[..]
-            ))
+                    std::str::from_utf8(&out.stdout[..])?) + "\n" +
+                    std::str::from_utf8(&out.stderr[..])?
+            )))
         }
         else {
             Ok(PathBuf::from(outpath))

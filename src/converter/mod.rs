@@ -40,11 +40,15 @@ pub fn convert<P: AsRef<Path>>(path: P) -> Result<PathBuf, ConvertError> {
         }
         
         last_err.unwrap_or_else(|| Err(ConvertError::bad_extension()))
-    };
+    }?;
 
     std::fs::remove_file(path)?;
     
-    return_path
+    if return_path.exists() {
+        Ok(return_path)
+    } else {
+        Err(ConvertError::file("Returned file not found"))
+    }
 }
 
 enum Convert {

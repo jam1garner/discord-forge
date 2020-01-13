@@ -90,7 +90,7 @@ impl EventHandler for Handler {
                 Ok(content) => content,
                 Err(why) => {
                     println!("Error downloading attachment: {:?}", why);
-                    let _ = message.channel_id.say("Error downloading attachment");
+                    message.channel_id.say("Error downloading attachment").unwrap();
 
                     return;
                 },
@@ -101,14 +101,14 @@ impl EventHandler for Handler {
                 Ok(()) => {}
                 Err(why) => {
                     println!("Error creating dir: {:?}", why);
-                    let _ = message.channel_id.say("Error creating dir");
+                    message.channel_id.say("Error creating dir").unwrap();
                 }
             }
             let mut file = match File::create(path.as_os_str()) {
                 Ok(file) => file,
                 Err(why) => {
                     println!("Error creating file: {:?}", why);
-                    let _ = message.channel_id.say("Error creating file");
+                    message.channel_id.say("Error creating file").unwrap();
 
                     return;
                 },

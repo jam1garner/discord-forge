@@ -25,10 +25,10 @@ impl Converter for ParamConverter {
             .arg(path)
             .arg("-o")
             .arg(&outpath)
-            .output()
-            .unwrap();
-        if !out.status.success() {
-            Err(ConvertError::param(std::str::from_utf8(&out.stdout[..]).unwrap()))
+            .output()?;
+        let output = std::str::from_utf8(&out.stdout[..])?;
+        if !out.status.success() || output.contains("Trace") {
+            Err(ConvertError::param(output))
         }
         else {
             Ok(PathBuf::from(outpath))
@@ -46,10 +46,10 @@ impl Converter for ParamConverter {
             .arg(path)
             .arg("-o")
             .arg(&outpath)
-            .output()
-            .unwrap();
-        if !out.status.success() {
-            Err(ConvertError::param(std::str::from_utf8(&out.stdout[..]).unwrap()))
+            .output()?;
+        let output = std::str::from_utf8(&out.stdout[..])?;
+        if !out.status.success() || output.contains("Trace") {
+            Err(ConvertError::param(output))
         }
         else {
             Ok(PathBuf::from(outpath))

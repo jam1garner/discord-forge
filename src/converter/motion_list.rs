@@ -7,8 +7,7 @@ use byteorder::{LittleEndian};
 pub struct MotionListConverter;
 
 fn check_if_motion_bin(path: &Path) -> bool {
-    let mut file = std::fs::File::open(path).unwrap();
-    file.read_hash40::<LittleEndian>().unwrap() == hash40!("motion")
+    std::fs::File::open(path).unwrap().read_hash40::<LittleEndian>().unwrap() == hash40!("motion")
 }
 
 impl Converter for MotionListConverter {
