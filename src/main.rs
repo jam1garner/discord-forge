@@ -31,8 +31,7 @@ use converter::SUPPORTED_TYPES;
 static HELP_TEXT: &str = 
 "%help - display this message\n\
 %set_channel - set the channel to watch\n\
-%update - update param labels and install paramxml if not installed\n\
-%donate - information on donations";
+%update - update param labels and install paramxml if not installed";
 
 impl EventHandler for Handler {
     fn message(&self, _context: Context, message: Message) {
@@ -68,14 +67,6 @@ impl EventHandler for Handler {
                             .build()
                     );
                 }
-                "donate" => {
-                    let _ =
-                    message.channel_id.say(
-                        MessageBuilder::new()
-                            .push("Donation Options:\nhttps://ko-fi.com/jam1garner\nhttps://paypal.me/jam1garner\nAny donations to help cover server costs are much appreciated.")
-                            .build()
-                    );
-                } 
                 _ => {}
             }
         }
