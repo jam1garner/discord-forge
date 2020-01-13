@@ -3,6 +3,7 @@ use super::error::ConvertError;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use nus3audio::{AudioFile, Nus3audioFile};
+use riff_wave::WaveReader;
 
 use super::{Converter, Convert};
 
@@ -23,6 +24,16 @@ pub fn message_to_range(message: &str) -> Result<String, ConvertError> {
     }
 }
 
+fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
+    if WaveReader::new(fs::File::open(path)?)?.pcm_format.sample_rate == hz {
+        Ok(())
+    } else {
+        Err(ConvertError::nus3audio(&format!(
+            "Bad wav sample rate. Needs a sample rate of {} hz", hz
+        )))
+    }
+}
+
 impl Converter for Nus3audioConverter {
     fn get_conversion(&self, file_extension: &str, _: &Path) -> Convert {
         match file_extension {
@@ -36,33 +47,30 @@ impl Converter for Nus3audioConverter {
         let mut lopuspath = PathBuf::from(path);
         lopuspath.set_extension("lopus");
         if lopuspath != path {
-            let out = if let Some(message) = message {
-                Command::new("dotnet")
-                    .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
-                    .arg("-c")
-                    .arg(path)
-                    .arg(&lopuspath)
-                    .arg("--bitrate")
-                    .arg("64000")
-                    .arg("--CBR")
-                    .arg("--opusheader")
-                    .arg("namco")
+            check_wav_samples(path, 48000)?;
+
+            let mut command = 
+                Command::new("dotnet");
+
+            command
+                .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
+                .arg("-c")
+                .arg(path)
+                .arg(&lopuspath)
+                .arg("--bitrate")
+                .arg("64000")
+                .arg("--CBR")
+                .arg("--opusheader")
+                .arg("namco");
+
+            if let Some(message) = message {
+                command
                     .arg("-l")
-                    .arg(message_to_range(message)?)
-                    .output()?
-            } else {
-                Command::new("dotnet")
-                    .arg("vgaudio/netcoreapp2.0/VGAudioCli.dll")
-                    .arg("-c")
-                    .arg(path)
-                    .arg(&lopuspath)
-                    .arg("--bitrate")
-                    .arg("64000")
-                    .arg("--CBR")
-                    .arg("--opusheader")
-                    .arg("namco")
-                    .output()?
-            };
+                    .arg(message_to_range(message)?);
+            }
+
+            let out = command.output()?;
+
             if !out.status.success() {
                 return Err(ConvertError::nus3audio(
                     &(String::from(std::str::from_utf8(&out.stderr[..])?)

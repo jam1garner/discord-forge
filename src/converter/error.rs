@@ -103,6 +103,15 @@ impl std::convert::From<std::num::ParseIntError> for ConvertError {
     }
 }
 
+impl std::convert::From<riff_wave::ReadError> for ConvertError {
+    fn from(err: riff_wave::ReadError) -> Self {
+        ConvertError {
+            message: format!("{:?}", err),
+            kind: ConvertErrorKind::WaveError,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -114,5 +123,6 @@ pub enum ConvertErrorKind {
     YamlError,
     Utf8Error,
     ParseIntError,
-    MessageFormat
+    MessageFormat,
+    WaveError
 }
