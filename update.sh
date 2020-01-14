@@ -29,7 +29,7 @@ wget https://raw.githubusercontent.com/ultimate-research/param-labels/master/mot
     mv Labels.txt motion_list_labels.txt &&\
     echo "Installed motion_list.bin labels"
 
-wget https://github.com/ultimate-research/param-labels/blob/master/sqb/Labels.txt &&\
+wget https://raw.githubusercontent.com/ultimate-research/param-labels/master/sqb/Labels.txt &&\
     mv Labels.txt sqb_labels.txt &&\
     echo "Installed SQB labels"
 
