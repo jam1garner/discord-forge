@@ -1,4 +1,5 @@
 mod msc;
+mod sqb;
 mod error;
 mod param;
 mod motion_list;
@@ -12,6 +13,7 @@ static CONVERTERS: &[&dyn Converter] = &[
     &nus3audio_convert::Nus3audioConverter,
     &param::ParamConverter,
     &motion_list::MotionListConverter,
+    &sqb::SqbConverter
 ];
 
 pub use error::SUPPORTED_TYPES;

@@ -31,7 +31,19 @@ use converter::SUPPORTED_TYPES;
 static HELP_TEXT: &str = 
 "%help - display this message\n\
 %set_channel - set the channel to watch\n\
-%update - update param labels and install paramxml if not installed";
+%update - update param labels and install paramxml if not installed\n\
+%thanks - credits";
+
+static THANKS_TEXT: &str = 
+"jam1garner - bot programming, libnus3audio, mscdec/msclang, etc.\n\
+Arthur (@BenArthur_7) - motion_list_rs, sqb-rs, and much more\n\
+Moosehunter, jam1garner, Raytwo, soneek - VGAudio lopus support\n\
+RandomTalkingBush, DemonSlayerX8, jam1garner - data.arc hashes
+soneek - nus3audio help\n\
+TNN, Genwald - WAV/audio help\n\
+Ploaj, SMG (ScanMountGoat) - ArcCross, SSBHLib\n\
+Arthur, Dr. Hypercake, Birdwards, SMG, Meshima, TNN, Blazingflare, TheSmartKid - Param labels\n\
+coolsonickirby, SushiiZ - testing help";
 
 impl EventHandler for Handler {
     fn message(&self, _context: Context, message: Message) {
@@ -64,6 +76,15 @@ impl EventHandler for Handler {
                             .push("Version 1.3\nCommands:")
                             .push_codeblock_safe(HELP_TEXT, None)
                             .push(format!("Supported types: {}", SUPPORTED_TYPES))
+                            .build()
+                    );
+                }
+                "thanks" => {
+                    let _ =
+                    message.channel_id.say(
+                        MessageBuilder::new()
+                            .push("A big thanks to everyone who has in anyway helped:")
+                            .push_codeblock_safe(THANKS_TEXT, None)
                             .build()
                     );
                 }
@@ -138,10 +159,12 @@ impl EventHandler for Handler {
     }
 }
 
-const LABEL_PATH: &str = "motion_list_labels.txt";
+const MOTION_LABEL_PATH: &str = "motion_list_labels.txt";
+const SQB_LABEL_PATH: &str = "sqb_labels.txt";
 
 fn main() {
-    update_labels(LABEL_PATH);
+    update_labels(MOTION_LABEL_PATH);
+    update_labels(SQB_LABEL_PATH);
 
     // Login with a bot token from the environment
     let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new())
@@ -181,5 +204,6 @@ fn update(message: Message) {
                 .build()
         ).unwrap();
     }
-    update_labels(LABEL_PATH);
+    update_labels(MOTION_LABEL_PATH);
+    update_labels(SQB_LABEL_PATH);
 }
