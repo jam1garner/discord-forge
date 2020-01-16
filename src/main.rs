@@ -32,7 +32,9 @@ static HELP_TEXT: &str =
 "%help - display this message\n\
 %set_channel - set the channel to watch\n\
 %update - update param labels and install paramxml if not installed\n\
-%thanks - credits";
+%thanks - credits\n\
+\n\
+Include 'start,end' or 'start-end' for looping in wav -> nus3audio conversions";
 
 static THANKS_TEXT: &str = 
 "jam1garner - bot programming, libnus3audio, mscdec/msclang, etc.\n\
@@ -163,8 +165,7 @@ const MOTION_LABEL_PATH: &str = "motion_list_labels.txt";
 const SQB_LABEL_PATH: &str = "sqb_labels.txt";
 
 fn main() {
-    update_labels(MOTION_LABEL_PATH);
-    update_labels(SQB_LABEL_PATH);
+    update_labels(&[MOTION_LABEL_PATH, SQB_LABEL_PATH]);
 
     // Login with a bot token from the environment
     let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new())
@@ -180,11 +181,13 @@ fn main() {
     }
 }
 
-fn update_labels(label_path: &str) {
-    match hash40::read_labels(label_path) {
-        Ok(labels) => hash40::set_labels(labels),
-        Err(e) => println!("Error loading labels: {}", e),
-    }
+fn update_labels(label_paths: &[&str]) {
+    hash40::set_labels(
+        label_paths
+            .iter()
+            .map(|label| hash40::read_labels(label).unwrap())
+            .flatten()
+    )
 }
 
 fn update(message: Message) {
@@ -204,6 +207,5 @@ fn update(message: Message) {
                 .build()
         ).unwrap();
     }
-    update_labels(MOTION_LABEL_PATH);
-    update_labels(SQB_LABEL_PATH);
+    update_labels(&[MOTION_LABEL_PATH, SQB_LABEL_PATH]);
 }
