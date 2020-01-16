@@ -22,7 +22,7 @@ impl Converter for SqbConverter {
 
     fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
-        outpath.set_extension("bin");
+        outpath.set_extension("sqb");
         sqb::save(&outpath, &serde_yaml::from_str(&std::fs::read_to_string(path)?)?)?;
         Ok(outpath)
     }

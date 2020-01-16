@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use super::{Converter, Convert};
 
-pub struct ParamConverter;
+pub struct MaterialConverter;
 
-impl Converter for ParamConverter {
+impl Converter for MaterialConverter {
     fn get_conversion(&self, file_extension: &str, _: &Path) -> Convert {
         match file_extension {
             "xml" => Convert::To,
-            "prc" => Convert::From,
+            "numatb" => Convert::From,
             _ => Convert::None,
         }
     }
@@ -18,17 +18,12 @@ impl Converter for ParamConverter {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("xml");
         let out = Command::new("dotnet")
-            .arg("paramxml/netcoreapp2.1/ParamXML.dll")
-            .arg("-l")
-            .arg("paramxml/netcoreapp2.1/ParamLabels.csv")
-            .arg("-d")
+            .arg("matlab/MatLab.dll")
             .arg(path)
-            .arg("-o")
             .arg(&outpath)
             .output()?;
-        let output = std::str::from_utf8(&out.stdout[..])?;
-        if !out.status.success() || output.contains("Trace") || !outpath.exists() {
-            Err(ConvertError::param(output))
+        if !out.status.success() || !outpath.exists() {
+            Err(ConvertError::param(std::str::from_utf8(&out.stderr[..])?))
         }
         else {
             Ok(PathBuf::from(outpath))
@@ -37,19 +32,14 @@ impl Converter for ParamConverter {
 
     fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
-        outpath.set_extension("prc");
+        outpath.set_extension("numatb");
         let out = Command::new("dotnet")
-            .arg("paramxml/netcoreapp2.1/ParamXML.dll")
-            .arg("-l")
-            .arg("paramxml/netcoreapp2.1/ParamLabels.csv")
-            .arg("-a")
+            .arg("matlab/MatLab.dll")
             .arg(path)
-            .arg("-o")
             .arg(&outpath)
             .output()?;
-        let output = std::str::from_utf8(&out.stdout[..])?;
-        if !out.status.success() || output.contains("Trace") || !outpath.exists() {
-            Err(ConvertError::param(output))
+        if !out.status.success() || !outpath.exists() {
+            Err(ConvertError::param(std::str::from_utf8(&out.stderr[..])?))
         }
         else {
             Ok(PathBuf::from(outpath))
