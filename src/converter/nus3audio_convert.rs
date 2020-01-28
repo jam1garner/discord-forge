@@ -71,7 +71,7 @@ impl Converter for Nus3audioConverter {
 
             let out = command.output()?;
 
-            if !out.status.success() {
+            if !out.status.success() | !lopuspath.exists() {
                 return Err(ConvertError::nus3audio(
                     &(String::from(std::str::from_utf8(&out.stderr[..])?)
                      + std::str::from_utf8(&out.stdout[..])?)
