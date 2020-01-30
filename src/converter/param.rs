@@ -9,7 +9,7 @@ impl Converter for ParamConverter {
     fn get_conversion(&self, file_extension: &str, _: &Path) -> Convert {
         match file_extension {
             "xml" => Convert::To,
-            "prc" => Convert::From,
+            "prc" | "stprm" | "stdat" => Convert::From,
             _ => Convert::None,
         }
     }
