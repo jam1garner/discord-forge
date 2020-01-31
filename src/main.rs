@@ -135,7 +135,7 @@ impl EventHandler for Handler {
             }
             
             match converter::extension(path.as_path()) {
-                "mscsb" | "c" => {
+                "mscsb" | "c" | "wav" => {
                     let _ = message.channel_id.broadcast_typing();
                 }
                 _ => {}
