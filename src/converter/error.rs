@@ -103,11 +103,11 @@ impl std::convert::From<std::num::ParseIntError> for ConvertError {
     }
 }
 
-impl std::convert::From<riff_wave::ReadError> for ConvertError {
-    fn from(err: riff_wave::ReadError) -> Self {
+impl std::convert::From<hound::Error> for ConvertError {
+    fn from(err: hound::Error) -> Self {
         ConvertError {
             message: format!("{:?}", err),
-            kind: ConvertErrorKind::WaveError,
+            kind: ConvertErrorKind::Nus3audio,
         }
     }
 }

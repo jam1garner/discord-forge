@@ -3,8 +3,8 @@ use super::error::ConvertError;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use nus3audio::{AudioFile, Nus3audioFile};
-use riff_wave::WaveReader;
 use std::ops::Range;
+use hound::WavReader;
 
 use super::{Converter, Convert};
 
@@ -26,8 +26,8 @@ pub fn message_to_range(message: &str) -> Result<Range<usize>, ConvertError> {
 }
 
 fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
-    let wav = WaveReader::new(fs::File::open(path)?)?;
-    if wav.pcm_format.sample_rate == hz {
+    let wav = WavReader::new(fs::File::open(path)?)?;
+    if wav.spec().sample_rate == hz {
         Ok(())
     } else {
         Err(ConvertError::nus3audio(&format!(
@@ -37,11 +37,8 @@ fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
 }
 
 fn check_wav_sample_count(path: &Path, count: usize) -> Result<(), ConvertError> {
-    let mut num_samples = 0;
-    let mut wav = WaveReader::new(fs::File::open(path)?)?;
-    while wav.read_sample_i32().ok().is_some() {
-        num_samples += 1;
-    }
+    let wav = WavReader::new(fs::File::open(path)?)?;
+    let num_samples = wav.len() as usize;
     if count <= num_samples {
         Ok(())
     } else {
