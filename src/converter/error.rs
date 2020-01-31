@@ -106,7 +106,16 @@ impl std::convert::From<std::num::ParseIntError> for ConvertError {
 impl std::convert::From<hound::Error> for ConvertError {
     fn from(err: hound::Error) -> Self {
         ConvertError {
-            message: format!("{:?}", err),
+            message: format!("HoundError: {:?}", err),
+            kind: ConvertErrorKind::Nus3audio,
+        }
+    }
+}
+
+impl std::convert::From<samplerate::Error> for ConvertError {
+    fn from(err: samplerate::Error) -> Self {
+        ConvertError {
+            message: format!("SampleRateError: {:?}", err),
             kind: ConvertErrorKind::Nus3audio,
         }
     }

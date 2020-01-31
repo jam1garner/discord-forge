@@ -13,6 +13,7 @@ serde_yaml = "^0.8"
 sqb-rs = { git = "https://github.com/BenHall-7/sqb-rs" }
 nutexb = "0.0.2"
 hound = "3"
+samplerate = "0.2"
 
 [dependencies.serenity]
 default-features = false

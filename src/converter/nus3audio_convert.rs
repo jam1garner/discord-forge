@@ -1,11 +1,14 @@
 use std::fs;
-use super::error::ConvertError;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use nus3audio::{AudioFile, Nus3audioFile};
 use std::ops::Range;
-use hound::WavReader;
+use std::io::Read;
 
+use hound::{WavReader, WavWriter};
+use samplerate::ConverterType::SincBestQuality;
+use nus3audio::{AudioFile, Nus3audioFile};
+
+use super::error::ConvertError;
 use super::{Converter, Convert};
 
 pub struct Nus3audioConverter;
@@ -25,14 +28,50 @@ pub fn message_to_range(message: &str) -> Result<Range<usize>, ConvertError> {
     }
 }
 
+const I32_MAX: f32 = std::i32::MAX as f32;
+
+fn samples_to_float(samples: Vec<i32>) -> Vec<f32> {
+    samples.into_iter().map(|sample| (sample as f32) / I32_MAX).collect()
+}
+
+fn samples_to_int(samples: Vec<f32>) -> Vec<i32> {
+    samples.into_iter().map(|sample| (sample * I32_MAX) as i32).collect()
+}
+
+fn resample_wav<R: Read>(path: &Path, wav: WavReader<R>, hz: u32) -> Result<(), ConvertError> {
+    let old_hz = wav.spec().sample_rate;
+    let samples: Vec<f32> = match wav.spec().sample_format {
+        hound::SampleFormat::Float => {
+            wav.into_samples().collect::<Result<_, _>>()?
+        }
+        hound::SampleFormat::Int => {
+            samples_to_float(wav.into_samples().collect::<Result<_, _>>()?)
+        }
+    };
+    let samples = samples_to_int(samplerate::convert(old_hz, hz, 1, SincBestQuality, &samples)?);
+    
+    let spec = hound::WavSpec {
+        channels: 1,
+        sample_rate: hz,
+        bits_per_sample: 32,
+        sample_format: hound::SampleFormat::Int
+    };
+
+    let mut writer = WavWriter::create(path, spec)?;
+
+    for sample in samples {
+        writer.write_sample(sample)?;
+    }
+
+    Ok(())
+}
+
 fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
     let wav = WavReader::new(fs::File::open(path)?)?;
     if wav.spec().sample_rate == hz {
         Ok(())
     } else {
-        Err(ConvertError::nus3audio(&format!(
-            "Bad wav sample rate. Needs a sample rate of {} hz", hz
-        )))
+        resample_wav(path, wav, hz)
     }
 }
 
