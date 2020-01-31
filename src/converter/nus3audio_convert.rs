@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use nus3audio::{AudioFile, Nus3audioFile};
 use riff_wave::WaveReader;
+use std::ops::Range;
 
 use super::{Converter, Convert};
 
@@ -11,25 +12,41 @@ pub struct Nus3audioConverter;
 
 const FORMAT_ERROR: &str = "Bad message format. Use either start-end or start,end";
 
-pub fn message_to_range(message: &str) -> Result<String, ConvertError> {
+pub fn message_to_range(message: &str) -> Result<Range<usize>, ConvertError> {
     let bounds = message
         .split(|c| c == ',' || c == '-')
         .map(|s| Ok(usize::from_str_radix(s.trim(), 10)?))
         .collect::<Result<Vec<usize>, ConvertError>>()
         .map_err(|_| ConvertError::message_format(FORMAT_ERROR))?;
     if let &[start, end] = &bounds[..] {
-        Ok(format!("{}-{}", start, end))
+        Ok(start..end)
     } else {
         Err(ConvertError::message_format(FORMAT_ERROR))
     }
 }
 
 fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
-    if WaveReader::new(fs::File::open(path)?)?.pcm_format.sample_rate == hz {
+    let wav = WaveReader::new(fs::File::open(path)?)?;
+    if wav.pcm_format.sample_rate == hz {
         Ok(())
     } else {
         Err(ConvertError::nus3audio(&format!(
             "Bad wav sample rate. Needs a sample rate of {} hz", hz
+        )))
+    }
+}
+
+fn check_wav_sample_count(path: &Path, count: usize) -> Result<(), ConvertError> {
+    let mut num_samples = 0;
+    let mut wav = WaveReader::new(fs::File::open(path)?)?;
+    while wav.read_sample_i32().ok().is_some() {
+        num_samples += 1;
+    }
+    if count <= num_samples {
+        Ok(())
+    } else {
+        Err(ConvertError::nus3audio(&format!(
+            "Bad loop points. There are only {} samples", num_samples
         )))
     }
 }
@@ -63,10 +80,13 @@ impl Converter for Nus3audioConverter {
                 .arg("--opusheader")
                 .arg("namco");
 
+
             if let Some(message) = message {
+                let range = message_to_range(message)?;
+                check_wav_sample_count(path, range.end)?;
                 command
                     .arg("-l")
-                    .arg(message_to_range(message)?);
+                    .arg(format!("{}-{}", range.start, range.end));
             }
 
             let out = command.output()?;
