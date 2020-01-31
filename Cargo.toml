@@ -12,6 +12,7 @@ byteorder = "^1.3"
 serde_yaml = "^0.8"
 riff-wave = "^0.1"
 sqb-rs = { git = "https://github.com/BenHall-7/sqb-rs" }
+nutexb = "0.0.2"
 
 [dependencies.serenity]
 default-features = false
