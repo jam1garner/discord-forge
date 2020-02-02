@@ -15,32 +15,31 @@ pub struct Nus3audioConverter;
 
 const FORMAT_ERROR: &str = "Bad message format. Use either start-end or start,end";
 
-pub fn message_to_range(message: &str) -> Result<Range<usize>, ConvertError> {
+pub fn message_to_range(message: &str, num_samples: usize) -> Result<Range<usize>, ConvertError> {
+    let sep = |c| c == ',' || c == '-';
     let bounds = message
-        .split(|c| c == ',' || c == '-')
+        .trim_end_matches(sep)
+        .split(sep)
         .map(|s| Ok(usize::from_str_radix(s.trim(), 10)?))
         .collect::<Result<Vec<usize>, ConvertError>>()
         .map_err(|_| ConvertError::message_format(FORMAT_ERROR))?;
+
     if let &[start, end] = &bounds[..] {
-        Ok(start..end)
+        if end <= num_samples {
+            Ok(start..end)
+        } else {
+            Err(ConvertError::nus3audio(&format!(
+                "Bad loop points. There are only {} samples", num_samples
+            )))
+        }
+    } else if let &[start] = &bounds[..] {
+        Ok(start..num_samples)
     } else {
-        Err(ConvertError::message_format(FORMAT_ERROR))
+        return Err(ConvertError::message_format(FORMAT_ERROR))
     }
 }
 
-const I16_MAX: f32 = std::i16::MAX as f32;
-
-fn max_from_bits(bits: u16) -> f32 {
-    match bits {
-        32 => std::i32::MAX as f32,
-        24 => 0x7fffff as f32,
-        16 => std::i16::MAX as f32,
-        8 => std::i8::MAX as f32,
-        _ => panic!("Bad bits per sample")
-    }
-}
-
-fn samples_to_float(samples: Vec<i16>, bits: u16) -> Vec<f32> {
+fn samples_to_float(samples: Vec<i16>) -> Vec<f32> {
     samples.into_iter().map(|sample| sample as f32).collect()
 }
 
@@ -50,29 +49,45 @@ fn samples_to_i16(samples: Vec<f32>) -> Vec<i16> {
 
 fn resample_wav<R: Read>(path: &Path, wav: WavReader<R>, hz: u32) -> Result<(), ConvertError> {
     let old_hz = wav.spec().sample_rate;
-    let old_bits = wav.spec().bits_per_sample;
+    let channels = wav.spec().channels as usize;
 
-    let samples: Vec<f32> = match wav.spec().sample_format {
+    let samples: Vec<i16> = match wav.spec().sample_format {
         hound::SampleFormat::Float => {
             return Err(ConvertError::nus3audio("f32 wavs not supported"))
         }
         hound::SampleFormat::Int => {
-            samples_to_float(wav.into_samples().collect::<Result<_, _>>()?, old_bits)
+            // Grab first channel only
+            wav.into_samples().collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, sample)|{
+                    if i % channels == 0 {
+                        Some(sample)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
         }
     };
-    let samples = samples_to_i16(samplerate::convert(old_hz, hz, 1, SincBestQuality, &samples)?);
 
-    let samples: Vec<_> = samples.into_iter()
-        .enumerate()
-        .filter_map(|(i, sample)|{
-            if i % 2 == 0 {
-                Some(sample)
-            } else {
-                None
-            }
-        })
-        .collect();
-    
+    let samples = if old_hz != hz {
+        samples_to_i16(
+                samplerate::convert(old_hz, hz, 1, SincBestQuality, &samples_to_float(samples))?
+           ).into_iter()
+            .enumerate()
+            .filter_map(|(i, sample)|{
+                if i % 2 == 0 {
+                    Some(sample)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        samples
+    };
+
     let spec = hound::WavSpec {
         channels: 1,
         sample_rate: hz,
@@ -98,16 +113,9 @@ fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
     }
 }
 
-fn check_wav_sample_count(path: &Path, count: usize) -> Result<(), ConvertError> {
+fn get_wav_sample_count(path: &Path) -> Result<u32, ConvertError> {
     let wav = WavReader::new(fs::File::open(path)?)?;
-    let num_samples = wav.len() as usize;
-    if count <= num_samples {
-        Ok(())
-    } else {
-        Err(ConvertError::nus3audio(&format!(
-            "Bad loop points. There are only {} samples", num_samples
-        )))
-    }
+    Ok(wav.len())
 }
 
 impl Converter for Nus3audioConverter {
@@ -141,8 +149,7 @@ impl Converter for Nus3audioConverter {
 
 
             if let Some(message) = message {
-                let range = message_to_range(message)?;
-                check_wav_sample_count(path, range.end)?;
+                let range = message_to_range(message, get_wav_sample_count(path)? as _)?;
                 command
                     .arg("-l")
                     .arg(format!("{}-{}", range.start, range.end));
