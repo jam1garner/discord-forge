@@ -41,6 +41,8 @@ pub fn message_to_range(message: &str, num_samples: usize) -> Result<Range<usize
 
 fn resample_wav(path: &Path) -> Result<(), ConvertError> {
     let output = Command::new("python3")
+        .env("LIBROSA_CACHE_DIR", "/tmp/librosa_cache")
+        .env("NUMBA_CACHE_DIR", "/tmp/numba_cache")
         .arg("resample.py")
         .arg(path)
         .output()?;
@@ -76,8 +78,10 @@ impl Converter for Nus3audioConverter {
         let mut lopuspath = PathBuf::from(path);
         lopuspath.set_extension("lopus");
         if lopuspath != path {
+            let old_samples = get_wav_sample_count(path)?;
             resample_wav(path)?;
-            
+            let new_samples = get_wav_sample_count(path)?;
+            let conversion_rate = (new_samples as f64) / (old_samples as f64);
 
             let mut command = 
                 Command::new("dotnet");
@@ -95,10 +99,12 @@ impl Converter for Nus3audioConverter {
 
 
             if let Some(message) = message {
-                let range = message_to_range(message, get_wav_sample_count(path)? as _)?;
+                let Range { start, end, .. } = message_to_range(message, new_samples as _)?;
+                let start = ((start as f64 * conversion_rate) + 0.5) as usize;
+                let end = ((end as f64 * conversion_rate) + 0.5) as usize;
                 command
                     .arg("-l")
-                    .arg(format!("{}-{}", range.start, range.end));
+                    .arg(format!("{}-{}", start, end));
             }
 
             let out = command.output()?;
