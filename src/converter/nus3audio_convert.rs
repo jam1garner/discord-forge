@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Output};
 use std::ops::Range;
 use std::io::Read;
 
@@ -39,78 +39,23 @@ pub fn message_to_range(message: &str, num_samples: usize) -> Result<Range<usize
     }
 }
 
-fn samples_to_float(samples: Vec<i16>) -> Vec<f32> {
-    samples.into_iter().map(|sample| sample as f32).collect()
-}
-
-fn samples_to_i16(samples: Vec<f32>) -> Vec<i16> {
-    samples.into_iter().map(|sample| sample as i16).collect()
-}
-
-fn resample_wav<R: Read>(path: &Path, wav: WavReader<R>, hz: u32) -> Result<(), ConvertError> {
-    let old_hz = wav.spec().sample_rate;
-    let channels = wav.spec().channels as usize;
-
-    let samples: Vec<i16> = match wav.spec().sample_format {
-        hound::SampleFormat::Float => {
-            return Err(ConvertError::nus3audio("f32 wavs not supported"))
-        }
-        hound::SampleFormat::Int => {
-            // Grab first channel only
-            wav.into_samples().collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .enumerate()
-                .filter_map(|(i, sample)|{
-                    if i % channels == 0 {
-                        Some(sample)
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        }
-    };
-
-    let samples = if old_hz != hz {
-        samples_to_i16(
-                samplerate::convert(old_hz, hz, 1, SincBestQuality, &samples_to_float(samples))?
-           ).into_iter()
-            .enumerate()
-            .filter_map(|(i, sample)|{
-                if i % 2 == 0 {
-                    Some(sample)
-                } else {
-                    None
-                }
-            })
-            .collect()
+fn resample_wav(path: &Path) -> Result<(), ConvertError> {
+    let output = Command::new("python3")
+        .arg("resample.py")
+        .arg(path)
+        .output()?;
+    if !output.status.success() {
+        return Err(ConvertError::nus3audio(
+            &(
+                String::new() +
+                std::str::from_utf8(&output.stdout)? +
+                std::str::from_utf8(&output.stderr)?
+            )
+        ))
     } else {
-        samples
-    };
-
-    let spec = hound::WavSpec {
-        channels: 1,
-        sample_rate: hz,
-        bits_per_sample: 16,
-        sample_format: hound::SampleFormat::Int
-    };
-
-    let mut writer = WavWriter::create(path, spec)?;
-
-    for sample in samples {
-        writer.write_sample(sample)?;
-    }
-
-    Ok(())
-}
-
-fn check_wav_samples(path: &Path, hz: u32) -> Result<(), ConvertError> {
-    let wav = WavReader::new(fs::File::open(path)?)?;
-    if wav.spec().sample_rate == hz {
         Ok(())
-    } else {
-        resample_wav(path, wav, hz)
     }
+
 }
 
 fn get_wav_sample_count(path: &Path) -> Result<u32, ConvertError> {
@@ -131,7 +76,8 @@ impl Converter for Nus3audioConverter {
         let mut lopuspath = PathBuf::from(path);
         lopuspath.set_extension("lopus");
         if lopuspath != path {
-            check_wav_samples(path, 48000)?;
+            resample_wav(path)?;
+            
 
             let mut command = 
                 Command::new("dotnet");
