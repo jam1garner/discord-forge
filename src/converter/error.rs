@@ -12,7 +12,7 @@ impl fmt::Debug for ConvertError {
     }
 }
 
-pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, nutexb, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin" ;
+pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, dds, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin" ;
 
 impl ConvertError {
     pub fn bad_extension() -> ConvertError {
