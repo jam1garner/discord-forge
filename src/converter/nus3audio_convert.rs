@@ -1,11 +1,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::Command;
 use std::ops::Range;
-use std::io::Read;
+use std::str::FromStr;
+use std::num::ParseFloatError;
 
-use hound::{WavReader, WavWriter};
-use samplerate::ConverterType::SincBestQuality;
+use hound::WavReader;
 use nus3audio::{AudioFile, Nus3audioFile};
 
 use super::error::ConvertError;
@@ -13,14 +13,38 @@ use super::{Converter, Convert};
 
 pub struct Nus3audioConverter;
 
-const FORMAT_ERROR: &str = "Bad message format. Use either start-end or start,end";
+const FORMAT_ERROR: &str =
+"Bad message format. Use either 'start' or 'start-end' or 'start,end'\n\
+Use either [[hh:]mm:]ss[.ss] for timestamps or an integer for samples.";
 
-pub fn message_to_range(message: &str, num_samples: usize) -> Result<Range<usize>, ConvertError> {
+fn f64_mul_round(a: f64, b: f64) -> usize {
+    ((a * b) + 0.5) as usize
+}
+
+pub fn message_to_range(message: &str, num_samples: usize, conversion_rate: f64) -> Result<Range<usize>, ConvertError> {
+    const HZ: f64 = 48000.0;
     let sep = |c| c == ',' || c == '-';
+    let timestamp = message.contains(|c| c == ':' || c == '.');
     let bounds = message
         .trim_end_matches(sep)
         .split(sep)
-        .map(|s| Ok(usize::from_str_radix(s.trim(), 10)?))
+        .map(|time| {
+            if timestamp {
+                let seconds =
+                    time.trim_start_matches(':')
+                        .split(':')
+                        .rev()
+                        .enumerate()
+                        .map(|(i, time)|{
+                            Ok(60f64.powi(i as i32) * f64::from_str(time.trim())?)
+                        })
+                        .sum::<Result<f64, ParseFloatError>>()
+                        .map_err(|_| ConvertError::message_format(FORMAT_ERROR))?;
+                Ok(f64_mul_round(seconds, HZ))
+            } else {
+                Ok(f64_mul_round(usize::from_str_radix(time.trim(), 10)? as f64, conversion_rate))
+            }
+        })
         .collect::<Result<Vec<usize>, ConvertError>>()
         .map_err(|_| ConvertError::message_format(FORMAT_ERROR))?;
 
@@ -97,14 +121,11 @@ impl Converter for Nus3audioConverter {
                 .arg("--opusheader")
                 .arg("namco");
 
-
             if let Some(message) = message {
-                let Range { start, end, .. } = message_to_range(message, new_samples as _)?;
-                let start = ((start as f64 * conversion_rate) + 0.5) as usize;
-                let end = ((end as f64 * conversion_rate) + 0.5) as usize;
+                let audio_loop = message_to_range(message, new_samples as _, conversion_rate)?;
                 command
                     .arg("-l")
-                    .arg(format!("{}-{}", start, end));
+                    .arg(format!("{}-{}", audio_loop.start, audio_loop.end));
             }
 
             let out = command.output()?;
