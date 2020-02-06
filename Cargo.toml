@@ -14,6 +14,8 @@ sqb-rs = { git = "https://github.com/BenHall-7/sqb-rs" }
 nutexb = "0.0.3"
 hound = "3"
 samplerate = "0.2"
+fuzzy-matcher = "0.3"
+lazy_static = "1.4"
 
 [dependencies.serenity]
 default-features = false

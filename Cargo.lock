@@ -352,6 +352,14 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "fuzzy-matcher"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "thread_local 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1220,8 +1228,10 @@ name = "smush-convert-bot"
 version = "0.1.0"
 dependencies = [
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fuzzy-matcher 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "hash40 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "motion_list_rs 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nus3audio 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "nutexb 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1534,6 +1544,7 @@ dependencies = [
 "checksum foreign-types 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
 "checksum foreign-types-shared 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 "checksum fuchsia-cprng 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
+"checksum fuzzy-matcher 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c20c3dd0480475a1e6da2f0d4dad7052d81386f56be9e23622e027c9240839b6"
 "checksum glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 "checksum hash40 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4c0aef74dbf31a926f3b691648c31c8fedda78339914595e7bf8f740068054c9"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
