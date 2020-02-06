@@ -12,7 +12,7 @@ use serenity::utils::MessageBuilder;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::path::{PathBuf};
+use std::path::{PathBuf, Path};
 use std::collections::BTreeSet;
 
 #[derive(Default)]
@@ -34,6 +34,10 @@ static HELP_TEXT: &str =
 %update - update param labels and install paramxml if not installed\n\
 %thanks - credits\n\
 \n\
+Arc commands\n\
+%ls [folder] - list files/folders in arc
+%get [file] - request a file from the arc
+\n\
 Include 'start,end' or 'start-end' for looping in wav -> nus3audio conversions";
 
 static THANKS_TEXT: &str = 
@@ -53,7 +57,7 @@ impl EventHandler for Handler {
             return;
         }
         if !message.content.is_empty() && &message.content[0..1] == "%" {
-            match &message.content[1..] {
+            match message.content[1..].trim() {
                 "update" => {
                     update(message);
                     return;
@@ -89,6 +93,105 @@ impl EventHandler for Handler {
                             .push_codeblock_safe(THANKS_TEXT, None)
                             .build()
                     );
+                }
+                s @ "ls" | s if s.starts_with("ls ") => {
+                    let args: Vec<_> = s[2..].trim().split(' ').collect();
+                    let (path, page) = if let &[path] = args.as_slice() {
+                        (path, 1usize)
+                    } else if let &[path, page, ..] = args.as_slice() {
+                        (
+                            path,
+                            match usize::from_str_radix(page, 10) {
+                                Ok(page) => page,
+                                Err(_) => {
+                                    message.channel_id.say(
+                                        MessageBuilder::new()
+                                            .push("Error:")
+                                            .push_codeblock_safe("Invalid page number. Use format 'ls [path] [page]'", None)
+                                            .build()
+                                    ).unwrap();
+                                    return;
+                                }
+                            }
+                        )
+                    } else {
+                        message.channel_id.say(
+                            MessageBuilder::new()
+                                .push("Error:")
+                                .push_codeblock_safe("Invalid page number. Use format 'ls [path] [page]'", None)
+                                .build()
+                        ).unwrap();
+                        return;
+                    };
+                    
+                    let path = match to_arc_path(path.trim()) {
+                        Some(path) => path,
+                        None => {
+                            message.channel_id.say(
+                                MessageBuilder::new()
+                                    .push("Error:")
+                                    .push_codeblock_safe("Invalid path", None)
+                                    .build()
+                            ).unwrap();
+                            return;
+                        }
+                    };
+
+                    const NUM_LINES: usize = 15;
+
+                    let (pages, result) =
+                        Command::new("ls").arg("-lh").arg(&path).output()
+                            .map(|out|{
+                                let output = String::new() +
+                                    std::str::from_utf8(&out.stdout).unwrap() +
+                                    std::str::from_utf8(&out.stderr).unwrap();
+                                let output = output.split('\n').collect::<Vec<_>>();
+                                let line_count = output.len();
+                                let page_count = (line_count + (NUM_LINES - 1)) / NUM_LINES;
+                                (
+                                    page_count,
+                                    output
+                                        .into_iter()
+                                        .skip((page - 1) * NUM_LINES)
+                                        .take(NUM_LINES)
+                                        .collect::<Vec<_>>()
+                                        .join("\n")
+                                )
+                            })
+                            .unwrap_or_else(|e| (0, e.to_string()));
+
+                    message.channel_id.say(
+                        MessageBuilder::new()
+                            .push(path.to_str().unwrap())
+                            .push(format!(" Page {}/{}", page, pages))
+                            .push_codeblock_safe(result, None)
+                            .build()
+                    ).unwrap();
+                }
+                s if s.starts_with("get ") => {
+                    let path = match to_arc_path(s[3..].trim()) {
+                        Some(path) => path,
+                        None => {
+                            message.channel_id.say(
+                                MessageBuilder::new()
+                                    .push("Error:")
+                                    .push_codeblock_safe("Invalid path", None)
+                                    .build()
+                            ).unwrap();
+                            return;
+                        }
+                    };
+
+                    message.channel_id.send_files(vec![path.to_str().unwrap()], |m| m
+                        .content(path.to_str().unwrap())
+                    ).or_else(|e|{
+                        message.channel_id.say(
+                            MessageBuilder::new()
+                                .push(format!("Error getting '{}':", path.to_str().unwrap()))
+                                .push_codeblock_safe(e.to_string(), None)
+                                .build()
+                        )
+                    }).unwrap();
                 }
                 _ => {}
             }
@@ -159,6 +262,19 @@ impl EventHandler for Handler {
             }
         }
     }
+}
+
+fn to_arc_path(s: &str) -> Option<PathBuf> {
+    let path = Path::new(s);
+    if path.components().any(|c| c == std::path::Component::ParentDir) {
+        return None;
+    }
+
+    let path: PathBuf = path.components()
+        .filter(|c| c != &std::path::Component::RootDir)
+        .collect();
+
+    Some([Path::new("/arc"), &path].iter().collect())
 }
 
 const MOTION_LABEL_PATH: &str = "motion_list_labels.txt";

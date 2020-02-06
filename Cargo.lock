@@ -689,7 +689,7 @@ dependencies = [
 
 [[package]]
 name = "nutexb"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "binwrite 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1224,7 +1224,7 @@ dependencies = [
  "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "motion_list_rs 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nus3audio 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "nutexb 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nutexb 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "samplerate 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serenity 0.5.14 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1574,7 +1574,7 @@ dependencies = [
 "checksum num-traits 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "c62be47e61d1842b9170f0fdeec8eba98e60e90e5446449a0545e5152acd7096"
 "checksum num_cpus 1.11.1 (registry+https://github.com/rust-lang/crates.io-index)" = "76dac5ed2a876980778b8b85f75a71b6cbf0db0b1232ee12f826bccb00d09d72"
 "checksum nus3audio 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "9d9e97725a740a50eaa8fc86be42c18d2f824056b30bf0d0ce407a08512a045d"
-"checksum nutexb 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "396f44054a406951e1be490b25d75aca8e82a401cf2ae59b86be523d101082af"
+"checksum nutexb 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cb0a7628c188d1e35f53384175460f80970ee4896dde86ef19d31f074e3acf20"
 "checksum openssl 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)" = "a3605c298474a3aa69de92d21139fb5e2a81688d308262359d85cdd0d12a7985"
 "checksum openssl-sys 0.9.53 (registry+https://github.com/rust-lang/crates.io-index)" = "465d16ae7fc0e313318f7de5cecf57b2fbe7511fd213978b457e1c96ff46736f"
 "checksum owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cdf84f41639e037b484f93433aa3897863b561ed65c6e59c7073d7c561710f37"
