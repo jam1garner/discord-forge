@@ -7,6 +7,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use std::sync::RwLock;
 use lazy_static::lazy_static;
+use super::MessageHelper;
 
 const SONG_NAME_CSV: &str = include_str!("song_name_to_file.tsv");
 
@@ -50,7 +51,7 @@ fn to_arc_path(s: &str) -> Option<PathBuf> {
 }
 
 
-pub fn ls(s: &str, message: &Message) {
+pub fn ls(s: &str, message: &MessageHelper) {
     let args: Vec<_> = s[2..].trim().split(' ').collect();
     let (path, page) = if let &[path] = args.as_slice() {
         (path, 1usize)
@@ -60,35 +61,35 @@ pub fn ls(s: &str, message: &Message) {
             match usize::from_str_radix(page, 10) {
                 Ok(page) => page,
                 Err(_) => {
-                    message.channel_id.say(
-                        MessageBuilder::new()
+                    message.say(
+                        &MessageBuilder::new()
                             .push("Error:")
                             .push_codeblock_safe("Invalid page number. Use format 'ls [path] [page]'", None)
                             .build()
-                    ).unwrap();
+                    );
                     return;
                 }
             }
         )
     } else {
-        message.channel_id.say(
+        message.say(
             MessageBuilder::new()
                 .push("Error:")
                 .push_codeblock_safe("Invalid page number. Use format 'ls [path] [page]'", None)
                 .build()
-        ).unwrap();
+        );
         return;
     };
     
     let path = match to_arc_path(path.trim()) {
         Some(path) => path,
         None => {
-            message.channel_id.say(
+            message.say(
                 MessageBuilder::new()
                     .push("Error:")
                     .push_codeblock_safe("Invalid path", None)
                     .build()
-            ).unwrap();
+            );
             return;
         }
     };
@@ -116,42 +117,41 @@ pub fn ls(s: &str, message: &Message) {
             })
             .unwrap_or_else(|e| (0, e.to_string()));
 
-    message.channel_id.say(
+    message.say(
         MessageBuilder::new()
             .push(path.to_str().unwrap())
             .push(format!(" Page {}/{}", page, pages))
             .push_codeblock_safe(result, None)
             .build()
-    ).unwrap();
+    );
 }
 
-pub fn get(s: &str, message: &Message) {
+pub fn get(s: &str, message: &MessageHelper) {
     let path = match to_arc_path(s[3..].trim()) {
         Some(path) => path,
         None => {
-            message.channel_id.say(
+            message.say(
                 MessageBuilder::new()
                     .push("Error:")
                     .push_codeblock_safe("Invalid path", None)
                     .build()
-            ).unwrap();
+            );
             return;
         }
     };
 
-    message.channel_id.send_files(vec![path.to_str().unwrap()], |m| m
-        .content(path.to_str().unwrap())
-    ).or_else(|e|{
-        message.channel_id.say(
-            MessageBuilder::new()
-                .push(format!("Error getting '{}':", path.to_str().unwrap()))
-                .push_codeblock_safe(e.to_string(), None)
-                .build()
-        )
-    }).unwrap();
+    message.send_file(path.to_str().unwrap(), path.to_str().unwrap())
+        .map_err(|e| {
+            message.say(
+                MessageBuilder::new()
+                    .push(format!("Error getting '{}':", path.to_str().unwrap()))
+                    .push_codeblock_safe(e.to_string(), None)
+                    .build()
+            );
+        });
 }
 
-pub fn find_song(s: &str, message: &Message) {
+pub fn find_song(s: &str, message: &MessageHelper) {
     let name = s[9..].trim().trim_matches('"');
     let matcher = SkimMatcherV2::default();
     let song_name_to_file = 
@@ -176,7 +176,7 @@ pub fn find_song(s: &str, message: &Message) {
     const LINES: usize = 15;
 
     if songs.is_empty() {
-        message.channel_id.say(format!("Song '{}' not found", name)).unwrap();
+        message.say(format!("Song '{}' not found", name));
         return;
     }
 
@@ -196,15 +196,15 @@ pub fn find_song(s: &str, message: &Message) {
         .collect::<Vec<_>>()
         .join("\n");
 
-    message.channel_id.say(
+    message.say(
         MessageBuilder::new()
             .push(format!("Found for '{}':", name))
             .push_codeblock_safe(songs, None)
             .build()
-    ).unwrap();
+    );
 }
 
-pub fn get_song(s: &str, message: &Message) {
+pub fn get_song(s: &str, message: &MessageHelper) {
     let name = s[8..].trim().trim_matches('"');
     let matcher = SkimMatcherV2::default();
     let song_name_to_file = 
@@ -228,7 +228,7 @@ pub fn get_song(s: &str, message: &Message) {
             .collect();
     
     if songs.is_empty() {
-        message.channel_id.say(format!("Song '{}' not found", name)).unwrap();
+        message.say(format!("Song '{}' not found", name));
         return;
     }
 
@@ -250,9 +250,16 @@ pub fn get_song(s: &str, message: &Message) {
         } else {
             String::new()
         };
-        message.channel_id.send_files(
-            vec![file_name],
-            |m| m.content(content)
-        ).unwrap();
+        message.send_file(
+            file_name,
+            content
+        ).map_err(|e| {
+            message.say(
+                MessageBuilder::new()
+                    .push(format!("Error uploading '{}':", file_name))
+                    .push_codeblock_safe(e.to_string(), None)
+                    .build()
+            );
+        });
     }
 }

@@ -4,6 +4,8 @@ extern crate serenity;
 
 mod converter;
 mod arc_commands;
+mod message_helper;
+use message_helper::MessageHelper;
 
 use std::sync::{Arc, Mutex};
 use std::process::Command;
@@ -53,32 +55,34 @@ Arthur, Dr. Hypercake, Birdwards, SMG, Meshima, TNN, Blazingflare, TheSmartKid -
 coolsonickirby, SushiiZ - testing help";
 
 impl EventHandler for Handler {
-    fn message(&self, _context: Context, message: Message) {
+    fn message(&self, context: Context, message: Message) {
+        let message = MessageHelper::new(message, context);
+        
         if message.author.bot {
             return;
         }
+        
         if !message.content.is_empty() && &message.content[0..1] == "%" {
             match message.content[1..].trim() {
                 "update" => {
-                    update(message);
+                    update(&message);
                     return;
                 }
                 "set_channel" => {
-                    let owner = serenity::http::raw::get_current_application_info()
-                                .unwrap()
-                                .owner;
-                    if message.author == owner {
+                    let owner = message.get_current_application_info().owner;
+                    let is_admin = message.member_permissions().administrator();
+                    if message.author == owner || is_admin {
                         let arc = Arc::clone(&self.channel_id);
                         let mut channel_ids = arc.lock().unwrap();
                         channel_ids.insert(message.channel_id);
-                        message.channel_id.say("Channel set").unwrap();
+                        message.say("Channel set");
                     } else {
-                        let _ = message.reply("You do not have the proper permissions to set the channel.");
+                        message.reply("You do not have the proper permissions to set the channel.");
                     }
                 }
                 "help" => {
                     let _ =
-                    message.channel_id.say(
+                    message.say(
                         MessageBuilder::new()
                             .push("Version 1.3\nCommands:")
                             .push_codeblock_safe(HELP_TEXT, None)
@@ -88,7 +92,7 @@ impl EventHandler for Handler {
                 }
                 "thanks" => {
                     let _ =
-                    message.channel_id.say(
+                    message.say(
                         MessageBuilder::new()
                             .push("A big thanks to everyone who has in anyway helped:")
                             .push_codeblock_safe(THANKS_TEXT, None)
@@ -100,7 +104,7 @@ impl EventHandler for Handler {
                 s if s.starts_with("find_song ") => arc_commands::find_song(s, &message),
                 s if s.starts_with("get_song ") => arc_commands::get_song(s, &message),
                 _ => {
-                    message.channel_id.say("Invalid command").unwrap();
+                    message.say("Invalid command");
                     return;
                 }
             }
@@ -111,12 +115,12 @@ impl EventHandler for Handler {
                 return;
             }
         }
-        for attachment in message.attachments {
+        for attachment in &message.attachments {
             let content = match attachment.download() {
                 Ok(content) => content,
                 Err(why) => {
                     println!("Error downloading attachment: {:?}", why);
-                    message.channel_id.say("Error downloading attachment").unwrap();
+                    message.say("Error downloading attachment");
 
                     return;
                 },
@@ -127,14 +131,14 @@ impl EventHandler for Handler {
                 Ok(()) => {}
                 Err(why) => {
                     println!("Error creating dir: {:?}", why);
-                    message.channel_id.say("Error creating dir").unwrap();
+                    message.say("Error creating dir");
                 }
             }
             let mut file = match File::create(path.as_os_str()) {
                 Ok(file) => file,
                 Err(why) => {
                     println!("Error creating file: {:?}", why);
-                    message.channel_id.say("Error creating file").unwrap();
+                    message.say("Error creating file");
 
                     return;
                 },
@@ -148,21 +152,27 @@ impl EventHandler for Handler {
             
             match converter::extension(path.as_path()) {
                 "mscsb" | "c" | "wav" => {
-                    let _ = message.channel_id.broadcast_typing();
+                    message.broadcast_typing();
                 }
                 _ => {}
             }
             match converter::convert(path, &message.content) {
                 Ok(path) => {
-                    let _ = message.channel_id.send_files(
-                        vec![path.to_str().unwrap()],
-                        |m| m.content("Converted file")
-                    );
+                    let _ =
+                    message.send_file(path.to_str().unwrap(), "Converted file")
+                        .map_err(|e|{
+                            message.say(
+                                MessageBuilder::new()
+                                    .push("Error sendinfg file: ")
+                                    .push_codeblock_safe(e.to_string(), None)
+                                    .build()
+                            );
+                        });
                     std::fs::remove_file(path).unwrap();
                 }
                 Err(why) => {
                     println!("Error converting file: {:?}", why);
-                    let _ = message.channel_id.say(
+                    message.say(
                         MessageBuilder::new()
                             .push("Error converting file:")
                             .push_codeblock_safe(why.message, None)
@@ -204,22 +214,22 @@ fn update_labels(label_paths: &[&str]) {
     )
 }
 
-fn update(message: Message) {
+fn update(message: &MessageHelper) {
     let update_output = Command::new("sh")
         .arg("update.sh")
         .output()
         .expect("Failed to run update");
     if update_output.status.success() {
         let out = std::str::from_utf8(&update_output.stdout[..]).unwrap();
-        message.channel_id.say(out).unwrap();
+        message.say(out);
     } else {
         let err = std::str::from_utf8(&update_output.stderr[..]).unwrap();
-        message.channel_id.say(
+        message.say(
             MessageBuilder::new()
                 .push("Error:")
                 .push_codeblock_safe(err, None)
                 .build()
-        ).unwrap();
+        );
     }
     update_labels(&[MOTION_LABEL_PATH, SQB_LABEL_PATH]);
 }
