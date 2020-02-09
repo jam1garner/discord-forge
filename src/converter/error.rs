@@ -12,7 +12,7 @@ impl fmt::Debug for ConvertError {
     }
 }
 
-pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, dds, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin, zip, sarc, szs, pack, bactorpack, bmodelsh, beventpack, stera, stats, arc, bars, blarc, bgenv, genvb" ;
+pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, dds, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin, zip, sarc, szs, pack, bactorpack, bmodelsh, beventpack, stera, stats, arc, bars, blarc, bgenv, genvb, (s)baischedule, (s)baniminfo, (s)bgdata, (s)bgsvdata, (s)bquestpack, (s)bquestpack, (s)byml, mubin, yml";
 
 impl ConvertError {
     pub fn bad_extension() -> ConvertError {
@@ -54,6 +54,13 @@ impl ConvertError {
         ConvertError {
             message: message.to_string(),
             kind: ConvertErrorKind::MessageFormat
+        }
+    }
+
+    pub fn byml<S: AsRef<str>>(message: S) -> ConvertError {
+        ConvertError {
+            message: message.as_ref().to_string(),
+            kind: ConvertErrorKind::Byml,
         }
     }
 }
@@ -148,6 +155,15 @@ impl std::convert::From<zip::result::ZipError> for ConvertError {
     }
 }
 
+impl std::convert::From<yaz0::Error> for ConvertError {
+    fn from(err: yaz0::Error) -> Self {
+        ConvertError {
+            message: format!("Yaz0Error: {:?}", err),
+            kind: ConvertErrorKind::Yaz0Error
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -162,5 +178,7 @@ pub enum ConvertErrorKind {
     MessageFormat,
     WaveError,
     SarcError,
-    ZipError
+    ZipError,
+    Byml,
+    Yaz0Error
 }

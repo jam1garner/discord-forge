@@ -1,5 +1,6 @@
 mod msc;
 mod sqb;
+mod byml;
 mod error;
 mod param;
 mod numatb;
@@ -20,6 +21,7 @@ static CONVERTERS: &[&dyn Converter] = &[
     &numatb::MaterialConverter,
     &nutexb::NutexbConverter,
     &sarc_converter::SarcConverter,
+    &byml::BymlConverter,
 ];
 
 pub use error::SUPPORTED_TYPES;

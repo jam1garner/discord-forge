@@ -56,6 +56,7 @@ Arthur (@BenArthur_7) - motion_list_rs, sqb-rs, and much more\n\
 Moosehunter, jam1garner, Raytwo, soneek - VGAudio lopus support\n\
 RandomTalkingBush, DemonSlayerX8, jam1garner - data.arc hashes
 soneek - nus3audio help\n\
+leoetlino - byml-v2\n\
 TNN, Genwald - WAV/audio help\n\
 Ploaj, SMG (ScanMountGoat) - ArcCross, SSBHLib\n\
 Arthur, Dr. Hypercake, Birdwards, SMG, Meshima, TNN, Blazingflare, TheSmartKid - Param labels\n\
@@ -207,7 +208,7 @@ impl EventHandler for Handler {
             }
             
             match converter::extension(path.as_path()) {
-                "mscsb" | "c" | "wav" => {
+                "mscsb" | "c" | "wav" | "zip" => {
                     message.broadcast_typing();
                 }
                 _ => {}

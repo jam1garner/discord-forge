@@ -1483,6 +1483,7 @@ dependencies = [
  "serde_yaml 0.8.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serenity 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sqb-rs 0.1.0 (git+https://github.com/BenHall-7/sqb-rs)",
+ "yaz0 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zip 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

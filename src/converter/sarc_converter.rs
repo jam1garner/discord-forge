@@ -15,6 +15,14 @@ fn check_if_sarc(path: &Path) -> std::io::Result<bool> {
     Ok(&magic == b"Yaz0" || &magic == b"SARC")
 }
 
+const COMPRESSED_EXTS: &[&str] = &[
+    "sbactorpack", "sbmodelsh", "sbeventpack", "ssarc", "pack", "stera", "stats", "szs"
+];
+
+const UNCOMPRESSED_EXTS: &[&str] = &[
+    "bactorpack", "bmodelsh", "beventpack", "sarc", "arc", "bars", "blarc", "bgenv", "genvb"
+];
+
 impl super::Converter for SarcConverter {
     fn get_conversion(&self, file_extension: &str, path: &Path) -> Convert {
         match file_extension {
@@ -44,27 +52,26 @@ impl super::Converter for SarcConverter {
 
         let byte_order = match message {
             Some(s) if s.contains("3ds") | s.contains("switch") => Endian::Little,
-            Some(s) if s.contains("wiiu") => Endian::Big,
+            Some(s) if s.contains("wiiu") | s.contains("wii u") | s.contains("big")
+                        | s.contains("Wii U") | s.contains("wii U") => Endian::Big,
             _ => Endian::Little
         };
 
-        const COMPRESSED_EXTS: &[&str] = &[
-            "ssarc", "pack", "bactorpack", "bmodelsh", "beventpack", "stera", "stats", "szs"
-        ];
+        let (comp_ext, uncomp_ext) = if let Some(s) = message {
+            let comp_ext = COMPRESSED_EXTS.iter().find(|ext| s.contains(*ext));
+            let uncomp_ext = UNCOMPRESSED_EXTS.iter().find(|ext| s.contains(*ext));
+            (comp_ext, uncomp_ext)
+        } else { 
+            (None, None)
+        };
 
-        const UNCOMPRESSED_EXTS: &[&str] = &[
-            "sarc", "arc", "bars", "blarc", "bgenv", "genvb"
-        ];
-
-        let (file_ext, is_compressed) = match message {
-            Some(s) if s.contains("uncompressed") => ("sarc", false),
-            Some(s) if s.contains("yaz0") | s.contains("compressed") => ("szs", true),
+        let (file_ext, is_compressed) = match (message, comp_ext, uncomp_ext) {
             // if message contains a compressed extension
-            Some(s) if COMPRESSED_EXTS.iter().any(|ext| s.contains(ext)) =>
-                (*COMPRESSED_EXTS.iter().find(|ext| s.contains(*ext)).unwrap(), true),
-            // if 
-            Some(s) if UNCOMPRESSED_EXTS.iter().any(|ext| s.contains(ext)) =>
-                (*UNCOMPRESSED_EXTS.iter().find(|ext| s.contains(*ext)).unwrap(), false),
+            (_, Some(ext), _) => (*ext, true),
+            // if message contains an uncompressed extension
+            (_, _, Some(ext))  => (*ext, false),
+            (Some(s), _, _) if s.contains("uncompressed") => ("sarc", false),
+            (Some(s), _, _) if s.contains("yaz0") | s.contains("compressed") => ("szs", true),
             _ => ("szs", true),
         };
 
