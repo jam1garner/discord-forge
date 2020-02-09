@@ -12,7 +12,7 @@ impl fmt::Debug for ConvertError {
     }
 }
 
-pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, dds, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin" ;
+pub static SUPPORTED_TYPES: &str = "prc, xml, wav, lopus, nus3audio, dds, mscsb, c, sqb, yaml, numatb, stprm, stdat, motion_list.bin, zip, sarc, szs, pack, bactorpack, bmodelsh, beventpack, stera, stats, arc, bars, blarc, bgenv, genvb" ;
 
 impl ConvertError {
     pub fn bad_extension() -> ConvertError {
@@ -121,6 +121,33 @@ impl std::convert::From<samplerate::Error> for ConvertError {
     }
 }
 
+impl std::convert::From<sarc::parser::Error> for ConvertError {
+    fn from(err: sarc::parser::Error) -> Self {
+        ConvertError {
+            message: format!("SarcParseError: {:?}", err),
+            kind: ConvertErrorKind::SarcError
+        }
+    }
+}
+
+impl std::convert::From<sarc::writer::Error> for ConvertError {
+    fn from(err: sarc::writer::Error) -> Self {
+        ConvertError {
+            message: format!("SarcWriteError: {:?}", err),
+            kind: ConvertErrorKind::SarcError
+        }
+    }
+}
+
+impl std::convert::From<zip::result::ZipError> for ConvertError {
+    fn from(err: zip::result::ZipError) -> Self {
+        ConvertError {
+            message: format!("ZipError: {:?}", err),
+            kind: ConvertErrorKind::ZipError
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertErrorKind {
     BadExtension,
@@ -133,5 +160,7 @@ pub enum ConvertErrorKind {
     Utf8Error,
     ParseIntError,
     MessageFormat,
-    WaveError
+    WaveError,
+    SarcError,
+    ZipError
 }

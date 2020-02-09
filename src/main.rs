@@ -40,6 +40,7 @@ static HELP_TEXT: &str =
 %unset_channel - don't watch this channel to watch for files\n\
 %update - update param labels and install paramxml if not installed\n\
 %thanks - credits\n\
+%supported_types - print all supported types
 \n\
 Arc commands\n\
 %ls [folder] - list files/folders in arc
@@ -132,7 +133,7 @@ impl EventHandler for Handler {
                         MessageBuilder::new()
                             .push("Version 1.3\nCommands:")
                             .push_codeblock_safe(HELP_TEXT, None)
-                            .push(format!("Supported types: {}", SUPPORTED_TYPES))
+                            .push(format!("Supported types: {}...", &SUPPORTED_TYPES[..90]))
                             .build()
                     );
                 }
@@ -142,6 +143,15 @@ impl EventHandler for Handler {
                         MessageBuilder::new()
                             .push("A big thanks to everyone who has in anyway helped:")
                             .push_codeblock_safe(THANKS_TEXT, None)
+                            .build()
+                    );
+                }
+                "supported_types" => {
+                    let _ =
+                    message.say(
+                        MessageBuilder::new()
+                            .push("Supported filetypes:")
+                            .push_codeblock_safe(SUPPORTED_TYPES, None)
                             .build()
                     );
                 }
@@ -209,7 +219,7 @@ impl EventHandler for Handler {
                         .map_err(|e|{
                             message.say(
                                 MessageBuilder::new()
-                                    .push("Error sendinfg file: ")
+                                    .push("Error sending file: ")
                                     .push_codeblock_safe(e.to_string(), None)
                                     .build()
                             );
@@ -255,11 +265,6 @@ fn main() {
     let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new(channels))
         .expect("Error creating client");
 
-    //client.with_framework(StandardFramework::new()
-    //    .configure(|c| c.prefix("%"))
-    //    .cmd("update", update));
-
-    // start listening for events by starting a single shard
     if let Err(why) = client.start() {
         println!("An error occurred while running the client: {:?}", why);
     }
@@ -275,10 +280,19 @@ fn update_labels(label_paths: &[&str]) {
 }
 
 fn update(message: &MessageHelper) {
-    let update_output = Command::new("sh")
-        .arg("update.sh")
-        .output()
-        .expect("Failed to run update");
+    let update_output =
+        match Command::new("sh").arg("update.sh").output() {
+            Ok(x) => x,
+            Err(e) => {
+                message.say(
+                    MessageBuilder::new()
+                        .push("Failed to run update:")
+                        .push_codeblock_safe(e.to_string(), None)
+                        .build()
+                    );
+                return;
+            }
+        };
     if update_output.status.success() {
         let out = std::str::from_utf8(&update_output.stdout[..]).unwrap();
         message.say(out);

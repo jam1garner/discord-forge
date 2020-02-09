@@ -6,6 +6,7 @@ mod numatb;
 mod motion_list;
 mod nus3audio_convert;
 mod nutexb;
+mod sarc_converter;
 use error::ConvertError;
 use std::path::{Path, PathBuf};
 use std::ffi::OsStr;
@@ -18,6 +19,7 @@ static CONVERTERS: &[&dyn Converter] = &[
     &sqb::SqbConverter,
     &numatb::MaterialConverter,
     &nutexb::NutexbConverter,
+    &sarc_converter::SarcConverter,
 ];
 
 pub use error::SUPPORTED_TYPES;
