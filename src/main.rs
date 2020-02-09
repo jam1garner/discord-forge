@@ -13,7 +13,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 use std::env;
-use std::fs::File;
+use std::fs::{File, self};
 use std::io::Write;
 use std::path::PathBuf;
 use std::collections::BTreeSet;
@@ -24,8 +24,11 @@ struct Handler {
 }
 
 impl Handler {
-    pub fn new() -> Handler {
-        Default::default()
+    pub fn new<It: IntoIterator<Item=ChannelId>>(channels: It) -> Handler {
+        Handler {
+            channel_id: Arc::new(Mutex::new(channels.into_iter().collect())),
+            ..Default::default()
+        }
     }
 }
 
@@ -40,6 +43,8 @@ static HELP_TEXT: &str =
 Arc commands\n\
 %ls [folder] - list files/folders in arc
 %get [file] - request a file from the arc
+%find_song [song name query] - list songs for a given name
+%get_song [song name query] - download the first song from %find_song
 \n\
 Include 'start,end' or 'start-end' for looping in wav -> nus3audio conversions";
 
@@ -53,6 +58,56 @@ TNN, Genwald - WAV/audio help\n\
 Ploaj, SMG (ScanMountGoat) - ArcCross, SSBHLib\n\
 Arthur, Dr. Hypercake, Birdwards, SMG, Meshima, TNN, Blazingflare, TheSmartKid - Param labels\n\
 coolsonickirby, SushiiZ - testing help";
+
+enum SetUnset {
+    Set,
+    Unset
+}
+
+use SetUnset::*;
+
+fn save_channels(channel_ids: &BTreeSet<ChannelId>, message: &MessageHelper, owner: &User) {
+    if let Err(e) = fs::write(
+        CHANNELS_PATH,
+        channel_ids.iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("\n")
+    ) {
+        message.say(
+            MessageBuilder::new()
+                .mention(owner)
+                .push(" Failed to save channel ids:")
+                .push_codeblock_safe(e.to_string(), None)
+                .build()
+        );
+    };
+}
+
+fn set_or_unset_channel(handler: &Handler, message: &MessageHelper, set: SetUnset) {
+    let owner = message.get_current_application_info().owner;
+    let is_admin = message.member_permissions().administrator();
+    if message.author == owner || is_admin {
+        let arc = Arc::clone(&handler.channel_id);
+        let mut channel_ids = arc.lock().unwrap();
+        match set {
+            Set => {
+                channel_ids.insert(message.channel_id);
+                message.say("Channel set");
+                save_channels(&channel_ids, message, &owner);
+            }
+            Unset => {
+                if channel_ids.remove(&message.channel_id) {
+                    message.say("Channel unset");
+                } else {
+                    message.say("Channel was not set");
+                }
+            }
+        }
+    } else {
+        message.reply("You do not have the proper permissions to set the channel.");
+    }
+}
 
 impl EventHandler for Handler {
     fn message(&self, context: Context, message: Message) {
@@ -68,18 +123,8 @@ impl EventHandler for Handler {
                     update(&message);
                     return;
                 }
-                "set_channel" => {
-                    let owner = message.get_current_application_info().owner;
-                    let is_admin = message.member_permissions().administrator();
-                    if message.author == owner || is_admin {
-                        let arc = Arc::clone(&self.channel_id);
-                        let mut channel_ids = arc.lock().unwrap();
-                        channel_ids.insert(message.channel_id);
-                        message.say("Channel set");
-                    } else {
-                        message.reply("You do not have the proper permissions to set the channel.");
-                    }
-                }
+                "set_channel" => set_or_unset_channel(self, &message, Set),
+                "unset_channel" => set_or_unset_channel(self, &message, Unset),
                 "help" => {
                     let _ =
                     message.say(
@@ -186,13 +231,27 @@ impl EventHandler for Handler {
 
 const MOTION_LABEL_PATH: &str = "motion_list_labels.txt";
 const SQB_LABEL_PATH: &str = "sqb_labels.txt";
+const CHANNELS_PATH: &str = "channels.txt";
+
+fn load_channels() -> Vec<ChannelId> {
+    fs::read_to_string(CHANNELS_PATH).ok()
+        .map(|channels_file|{
+            channels_file.split('\n')
+                .map(|s| u64::from_str_radix(s, 10))
+                .filter_map(Result::ok)
+                .map(Into::into)
+                .collect()
+        })
+        .unwrap_or_default()
+}
 
 fn main() {
     arc_commands::setup_songs();
     update_labels(&[MOTION_LABEL_PATH, SQB_LABEL_PATH]);
+    let channels = load_channels();
 
     // Login with a bot token from the environment
-    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new())
+    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler::new(channels))
         .expect("Error creating client");
 
     //client.with_framework(StandardFramework::new()

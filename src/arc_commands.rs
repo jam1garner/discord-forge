@@ -148,7 +148,8 @@ pub fn get(s: &str, message: &MessageHelper) {
                     .push_codeblock_safe(e.to_string(), None)
                     .build()
             );
-        });
+        })
+        .unwrap();
 }
 
 pub fn find_song(s: &str, message: &MessageHelper) {
@@ -260,6 +261,7 @@ pub fn get_song(s: &str, message: &MessageHelper) {
                     .push_codeblock_safe(e.to_string(), None)
                     .build()
             );
-        });
+        })
+        .unwrap();
     }
 }
