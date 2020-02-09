@@ -36,7 +36,8 @@ use converter::SUPPORTED_TYPES;
 
 static HELP_TEXT: &str = 
 "%help - display this message\n\
-%set_channel - set the channel to watch\n\
+%set_channel - watch this channel for files\n\
+%unset_channel - don't watch this channel to watch for files\n\
 %update - update param labels and install paramxml if not installed\n\
 %thanks - credits\n\
 \n\
