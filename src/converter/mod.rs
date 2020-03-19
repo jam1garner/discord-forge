@@ -1,6 +1,6 @@
 mod msc;
 mod sqb;
-mod byml;
+pub mod byml;
 mod error;
 mod param;
 mod numatb;

@@ -13,7 +13,7 @@ fn check_if_byml(path: &Path) -> std::io::Result<bool> {
     Ok(&magic[..2] == b"BY" || &magic[..2] == b"YB" || &magic == b"Yaz0")
 }
 
-const EXTENSIONS: &[&str] = &[
+pub const EXTENSIONS: &[&str] = &[
     "baischedule", "baniminfo", "bgdata", "bgsvdata", "bquestpack", "bquestpack", "byml", "mubin"
 ];
 
@@ -65,7 +65,8 @@ impl Converter for BymlConverter {
         };
         
         let mut outpath = PathBuf::from(path);
-        outpath.set_extension(ext.unwrap_or("byml".into()));
+        let ext = ext.unwrap_or("byml".into());
+        outpath.set_extension(&ext);
         let out = if little_endian {
             Command::new("yml_to_byml")
                 .arg(path)
@@ -79,7 +80,7 @@ impl Converter for BymlConverter {
                 .output()?
         };
         
-        if compress {
+        if compress && !ext.starts_with("s") {
             compress_file(&outpath)?;
         }
 

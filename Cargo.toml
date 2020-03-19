@@ -16,8 +16,8 @@ hound = "3"
 samplerate = "0.2"
 fuzzy-matcher = "0.3"
 lazy_static = "1.4"
-sarc = ">=1.0.1"
-zip = "0.5"
+sarc = "1.1.1"
+zip = "0.5.5"
 yaz0 = "0.1.2"
 
 [dependencies.serenity]

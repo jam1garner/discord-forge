@@ -35,7 +35,8 @@ impl Handler {
 use converter::SUPPORTED_TYPES;
 
 static HELP_TEXT: &str = 
-"%help - display this message\n\
+"%convert [args] - convert file even if channel isn't set
+%help - display this message\n\
 %set_channel - watch this channel for files\n\
 %unset_channel - don't watch this channel to watch for files\n\
 %update - update param labels and install paramxml if not installed\n\
@@ -119,9 +120,16 @@ impl EventHandler for Handler {
         if message.author.bot {
             return;
         }
+
+        let mut message_content = &message.content[..];
+        let mut convert_command = false;
         
         if !message.content.is_empty() && &message.content[0..1] == "%" {
             match message.content[1..].trim() {
+                s if s.starts_with("convert") => {
+                    message_content = &s[7..];
+                    convert_command = true;
+                }
                 "update" => {
                     update(&message);
                     return;
@@ -166,7 +174,7 @@ impl EventHandler for Handler {
                 }
             }
         }
-        {
+        if !convert_command {
             let enabled_channels = Arc::clone(&self.channel_id);
             if !enabled_channels.lock().unwrap().contains(&message.channel_id) {
                 return;
@@ -207,13 +215,13 @@ impl EventHandler for Handler {
                 return;
             }
             
-            match converter::extension(path.as_path()) {
-                "mscsb" | "c" | "wav" | "zip" => {
-                    message.broadcast_typing();
-                }
-                _ => {}
+            if match converter::extension(path.as_path()) {
+                "mscsb" | "c" | "wav" | "zip" | "yml" => true,
+                s => converter::byml::EXTENSIONS.contains(&s.trim_start_matches("s")),
+            } {
+                message.broadcast_typing();
             }
-            match converter::convert(path, &message.content) {
+            match converter::convert(path, message_content) {
                 Ok(path) => {
                     let _ =
                     message.send_file(path.to_str().unwrap(), "Converted file")
@@ -226,6 +234,7 @@ impl EventHandler for Handler {
                             );
                         });
                     std::fs::remove_file(path).unwrap();
+
                 }
                 Err(why) => {
                     println!("Error converting file: {:?}", why);
