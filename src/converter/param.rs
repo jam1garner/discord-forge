@@ -1,7 +1,8 @@
 use super::error::ConvertError;
+use std::io::Seek;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use super::{Converter, Convert};
+use prc::xml;
 
 pub struct ParamConverter;
 
@@ -17,43 +18,30 @@ impl Converter for ParamConverter {
     fn convert_from(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("xml");
-        let out = Command::new("dotnet")
-            .arg("paramxml/netcoreapp2.1/ParamXML.dll")
-            .arg("-l")
-            .arg("paramxml/netcoreapp2.1/ParamLabels.csv")
-            .arg("-d")
-            .arg(path)
-            .arg("-o")
-            .arg(&outpath)
-            .output()?;
-        let output = std::str::from_utf8(&out.stdout[..])?;
-        if !out.status.success() || output.contains("Trace") || !outpath.exists() {
-            Err(ConvertError::param(output))
-        }
-        else {
-            Ok(PathBuf::from(outpath))
-        } 
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(&outpath)?);
+        xml::write_xml(&prc::open(path)?, &mut writer)
+            .or_else(|e| Err(ConvertError::param(format!("{:?}", e).as_ref())))?;
+        Ok(outpath)
     }
 
     fn convert_to(&self, path: &Path, _: Option<&str>) -> Result<PathBuf, ConvertError> {
         let mut outpath = PathBuf::from(path);
         outpath.set_extension("prc");
-        let out = Command::new("dotnet")
-            .arg("paramxml/netcoreapp2.1/ParamXML.dll")
-            .arg("-l")
-            .arg("paramxml/netcoreapp2.1/ParamLabels.csv")
-            .arg("-a")
-            .arg(path)
-            .arg("-o")
-            .arg(&outpath)
-            .output()?;
-        let output = std::str::from_utf8(&out.stdout[..])?;
-        if !out.status.success() || output.contains("Trace") || !outpath.exists() {
-            Err(ConvertError::param(output))
+        let mut reader = std::io::BufReader::new(std::fs::File::open(path)?);
+        match xml::read_xml(&mut reader) {
+            Ok(p) => prc::save(&outpath, &p)?,
+            Err(e) => {
+                reader.seek(std::io::SeekFrom::Start(0))?;
+                return Err(ConvertError::param(
+                    format!(
+                        "{}{:?}",
+                        xml::get_xml_error(&mut reader, e.start, e.end)?,
+                        e.error
+                    ).as_ref()
+                ))
+            }
         }
-        else {
-            Ok(PathBuf::from(outpath))
-        } 
+        Ok(outpath)
     }
 }
 
