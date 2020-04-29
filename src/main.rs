@@ -252,6 +252,7 @@ impl EventHandler for Handler {
 
 const MOTION_LABEL_PATH: &str = "motion_list_labels.txt";
 const SQB_LABEL_PATH: &str = "sqb_labels.txt";
+const PARAM_LABEL_PATH: &str = "param_labels.csv";
 const CHANNELS_PATH: &str = "channels.txt";
 
 fn load_channels() -> Vec<ChannelId> {
@@ -286,7 +287,10 @@ fn update_labels(label_paths: &[&str]) {
             .iter()
             .map(|label| hash40::read_labels(label).unwrap())
             .flatten()
-    )
+    );
+    if let Ok(i) = prc::hash40::read_custom_labels(PARAM_LABEL_PATH) {
+        prc::hash40::set_custom_labels(i.into_iter());
+    }
 }
 
 fn update(message: &MessageHelper) {

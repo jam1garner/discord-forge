@@ -15,13 +15,13 @@ use std::ffi::OsStr;
 static CONVERTERS: &[&dyn Converter] = &[
     &msc::MscsbConverter,
     &nus3audio_convert::Nus3audioConverter,
-    &param::ParamConverter,
     &motion_list::MotionListConverter,
     &sqb::SqbConverter,
     &numatb::MaterialConverter,
     &nutexb::NutexbConverter,
     &sarc_converter::SarcConverter,
     &byml::BymlConverter,
+    &param::ParamConverter,
 ];
 
 pub use error::SUPPORTED_TYPES;
