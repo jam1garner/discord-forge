@@ -168,6 +168,7 @@ impl EventHandler for Handler {
                 s if s.starts_with("get ") => arc_commands::get(s, &message),
                 s if s.starts_with("find_song ") => arc_commands::find_song(s, &message),
                 s if s.starts_with("get_song ") => arc_commands::get_song(s, &message),
+                s if s.starts_with("hash ") => arc_commands::hash(s, &message),
                 _ => {
                     message.say("Invalid command");
                     return;

@@ -1,4 +1,3 @@
-use serenity::model::prelude::*;
 use serenity::utils::MessageBuilder;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -8,6 +7,114 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use std::sync::RwLock;
 use lazy_static::lazy_static;
 use super::MessageHelper;
+use hash40::to_hash40;
+
+static ARC_HASH_STRINGS: &str = include_str!("hash40s.tsv");
+static PARAM_HASH_STRINGS: &str = include_str!("ParamLabels.csv");
+
+lazy_static! {
+    static ref ARC_NAMES: HashMap<u64, &'static str> = {
+        ARC_HASH_STRINGS
+            .split('\n')
+            .filter_map(|line|{
+                let split: Vec<&'static str> = line.split('\t').collect();
+                if let &[hash, string] = &split[..] {
+                    Some((u64::from_str_radix(hash, 16).ok()?, string))
+                } else {
+                    None
+                }
+            })
+            .chain(
+                ARC_HASH_STRINGS
+                    .split('\n')
+                    .filter_map(|line|{
+                        let split: Vec<&'static str> = line.split('\t').collect();
+                        if let &[hash, string] = &split[..] {
+                            Some((u64::from_str_radix(hash, 16).ok()? & 0xFFFF_FFFF, string))
+                        } else {
+                            None
+                        }
+                    })
+            )
+            .collect()
+    };
+
+    static ref PARAM_NAMES: HashMap<u64, &'static str> = {
+        PARAM_HASH_STRINGS
+            .split('\n')
+            .filter_map(|line|{
+                let split: Vec<&'static str> = line.split(',').collect();
+                if let &[hash, string] = &split[..] {
+                    let hash = hash.trim_start_matches("0x");
+                    Some((u64::from_str_radix(hash, 16).ok()?, string))
+                } else {
+                    None
+                }
+            })
+            .chain(
+                PARAM_HASH_STRINGS
+                    .split('\n')
+                    .filter_map(|line|{
+                        let split: Vec<&'static str> = line.split(',').collect();
+                        if let &[hash, string] = &split[..] {
+                            let hash = hash.trim_start_matches("0x");
+                            Some((u64::from_str_radix(hash, 16).ok()? & 0xFFFF_FFFF, string))
+                        } else {
+                            None
+                        }
+                    })
+            )
+            .collect()
+    };
+}
+
+pub fn hash(s: &str, message: &MessageHelper) {
+    let text = (&s[5..]).trim();
+
+    if text == "check_param_hashes" {
+        message.say(format!("Loaded {} param hashes", PARAM_NAMES.len()));
+    }
+
+    if text.starts_with("0x") || text.chars().all(|c| c.is_ascii_hexdigit()) {
+        let text = text.trim_start_matches("0x");
+        if let Ok(num) = u64::from_str_radix(text, 16) {
+            let arc_str = ARC_NAMES.get(&num);
+            let param_str = PARAM_NAMES.get(&num);
+
+            if arc_str.is_none() && param_str.is_none() {
+                message.say(format!("No matching string found for hash 0x{:X}", num));
+            } else {
+                if let Some(arc_str) = arc_str {
+                    message.say(
+                        MessageBuilder::new()
+                            .push("ARC match:")
+                            .push_codeblock_safe(arc_str, None)
+                            .build()
+                    );
+                }
+                if let Some(param_str) = param_str {
+                    message.say(
+                        MessageBuilder::new()
+                            .push("Param match:")
+                            .push_codeblock_safe(param_str, None)
+                            .build()
+                    );
+                }
+            }
+        } else {
+            message.say("Failed to parse. Invalid hex literal.");
+        }
+    } else {
+        let text = text.trim_matches('"');
+        let hash = to_hash40(text);
+        let hash = ((hash.strlen() as u64) << 0x20) + hash.crc() as u64;
+        message.say(
+            MessageBuilder::new()
+                .push_codeblock_safe(format!("0x{:x}", hash), None)
+                .build()
+        );
+    }
+}
 
 const SONG_NAME_CSV: &str = include_str!("song_name_to_file.tsv");
 
@@ -15,6 +122,7 @@ lazy_static! {
     static ref SONG_NAME_TO_FILE: RwLock<Option<HashMap<&'static str, Vec<String>>>>
         = RwLock::new(None);
 }
+
 
 pub fn setup_songs() {
     let s: HashMap<_, _> =

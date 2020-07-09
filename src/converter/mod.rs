@@ -1,3 +1,4 @@
+mod lua;
 mod msc;
 mod sqb;
 pub mod byml;
@@ -22,6 +23,7 @@ static CONVERTERS: &[&dyn Converter] = &[
     &nutexb::NutexbConverter,
     &sarc_converter::SarcConverter,
     &byml::BymlConverter,
+    &lua::LuaConverter,
 ];
 
 pub use error::SUPPORTED_TYPES;
