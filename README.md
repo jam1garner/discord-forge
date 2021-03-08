@@ -17,7 +17,7 @@ rustup install nightly
 Ubuntu dependency setup:
 
 ```
-sudo apt install -y cmake libsamplerate-dev 
+sudo apt install -y cmake libsamplerate-dev libclang-dev
 ```
 
 ## Building
